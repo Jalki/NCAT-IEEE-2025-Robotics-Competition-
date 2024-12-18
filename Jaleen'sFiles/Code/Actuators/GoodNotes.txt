@@ -1,0 +1,2 @@
+https://forums.raspberrypi.com/viewtopic.php?t=333947
+This is about how to use arduino code translated to python for motor controls
