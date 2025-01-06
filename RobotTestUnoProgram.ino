@@ -142,7 +142,7 @@ void robotTest() //runs through test of all outputs
   for(int i = 0; i < 11; i++ ) //runs through all movement commands
   {
     sendData(i, 40);
-    waitForMovement();
+    waitForMovement(2000);
   
     delay(500);
     
@@ -194,23 +194,36 @@ void robotRoutine()
   //current robot routine
 
   moveLoader(loaderLower, 1000);
-  sendData(forward, 900);
-  waitForMovement();
+  sendData(forward, 1000);
+  waitForMovement(10000);
+  driveBrush(3000);
+  sendData(backward, 150);
+  moveLoader(loaderRaise, 8000);
+  moveLoader(loaderLower, 8000);
+  driveMagnetWheel(2000);
   sendData(backward, 75);
-  waitForMovement();
+  waitForMovement(10000);
   sendData(right, 195);
-  waitForMovement();
-  rotateCW(666);
-  waitForMovement();
-  sendData(left, 200);
-  waitForMovement();
+  waitForMovement(10000);
+  rotateCW(570);
+  waitForMovement(5000);
+  sendData(left, 800);
+  waitForMovement(5000);
+  sendData(right, 100);
+  waitForMovement(5000);
   sendData(forward, 1266);
-  waitForMovement();
+  waitForMovement(10000);
   sendData(right, 150);
-  waitForMovement();
-  rotateCW(666);
-  waitForMovement();
-  
+  waitForMovement(10000);
+  rotateCW(570);
+  waitForMovement(10000);
+  sendData(left, 600);
+  waitForMovement(10000);
+  sendData(right,375);
+  waitForMovement(10000);
+  sendData(forward, 950);
+  waitForMovement(5000);
+  driveStepMotor(stepGeo, 6000);
 }
 void readData(int bytes) //if I2C data is received it means the arduino micro has finished the movement
 {
@@ -218,11 +231,17 @@ void readData(int bytes) //if I2C data is received it means the arduino micro ha
   finishedMovement = true;
 }
 
-void waitForMovement() //function to wait until data is seen to indicate movement is finished
+void waitForMovement(int maxDelay) //function to wait until data is seen to indicate movement is finished
 {
   while (!finishedMovement)
   {
     delay(100);
+    maxDelay -= 100;
+    if (maxDelay <= 100)
+    {
+      finishedMovement = true;
+    }
   }
+  delay(250);
   finishedMovement = false;
 }
