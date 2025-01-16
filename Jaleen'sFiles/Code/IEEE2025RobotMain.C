@@ -1,7 +1,8 @@
 #include <stdio.h>
 #include <pthread.h>
 //#include "PhotoresistorOperation.C"
-#include "IR_Avoidance.C"
+//#include "IR_Avoidance.C"
+#include "AprilTag.C"
 
 //This is the main file for the IEEE 2025 Southeast Con robotics competition. All code is public and open sourced.
 //Most of this code is simply a overarching state machine to control what happens in said state, and the switching of states!
@@ -41,12 +42,12 @@ void StateTrans() //This function controls the transisting of the state machine
         default:
             State = 0;
             printf("Raspberry Pi is in inert state");
-            printf("Which testing function do you wish to do? 1)IR Avoidance, 2) IR Tracking, 3)Photoresistor, 4) Camera, 5)Actuactors, 6) Multithreading testing");
+            printf("Which testing function do you wish to do? 1)April Tag Detection Software, 2) IR Tracking, 3)Photoresistor, 4) Camera, 5)Actuactors, 6) Multithreading testing");
             scanf("%d", &user);
             switch (user)
             {
             case 1:
-                IR_AVOID();
+                ;
                 break;
             
             default:
