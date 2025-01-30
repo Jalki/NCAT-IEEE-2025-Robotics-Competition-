@@ -12,6 +12,20 @@ int State = 0; //0-Inert State (IS), 1-Calibration State (CS), 2-Signal LED Stat
 
 int user; //Integer to look at what user wants (TESTING ONLY!)
 
+//Define values
+#define NUM_THREADS 4 //Rpi has 4 cores, 1 thread each, meaning 4 threads max
+pthread_mutex_t print_mutex = PTHREAD_MUTEX_INITIALIZER;
+int trigger_threads = 0;
+void Inert_State();
+void StateTrans();
+
+// Thread functions
+void* actuators_work(void* arg);
+void* sensors_work(void* arg);
+void* camera_work(void* arg);
+void* data_work(void* arg);
+
+
 void Calibration_State(){} //The function to manage what would happen in CS
 
 void SignalLED_State(){} //The function to manage what would happen in SLS
@@ -86,6 +100,86 @@ void StateTrans() //This function controls the transisting of the state machine
 }
 
 int main(void){
+    pthread_t thrd_1, thrd_2, thrd_3, thrd_4;
+
+    //Creates threads
+    if (pthread_create(&thrd_1, NULL, actuactors_work, NULL) != 0){
+        perror("pthread_create for thread 1 failed");
+    }
+
+    if (pthread_create(&thrd_2, NULL, sensors_work, NULL) != 0){
+        perror("pthread_create for thread 2 failed");
+    }
+
+    if (pthread_create(&thrd_3, NULL, camera_work, NULL) != 0){
+        perror("pthread_create for thread 3 failed");
+    }
+
+    if (pthread_create(&thrd_1, NULL, actuactors_work, NULL) != 0){
+        perror("pthread_create for thread 4 failed");
+    }
+
     StateTrans();
+    // Wait for the threads to finish
+    pthread_join(thrd_1, NULL);
+    pthread_join(thrd_2, NULL);
+    pthread_join(thrd_3, NULL);
+    pthread_join(thrd_4, NULL);
     return 0;
+}
+
+//This function is the thread dedicated to operating actuactors
+void* actuactors_work(void* arg)
+{
+   while (1) {
+        if (trigger_threads) {
+            pthread_mutex_lock(&print_mutex);
+            printf("Thread 1 (Actuators) received message: Multithreading Testing\n");
+            pthread_mutex_unlock(&print_mutex);
+            break;  // Exit after printing the message
+        }
+    }
+    return NULL;
+}
+
+//This function is the thread dedicated to operating sensors
+void* sensors_work(void* arg)
+{
+    while (1) {
+        if (trigger_threads) {
+            pthread_mutex_lock(&print_mutex);
+            printf("Thread 2 (Sensors) received message: Multithreading Testing\n");
+            pthread_mutex_unlock(&print_mutex);
+            break;  // Exit after printing the message
+        }
+    }
+    return NULL;
+}
+
+//This function is the thread dedicated to operating camera work
+void* camera_work(void* arg)
+{
+    while (1) {
+        if (trigger_threads) {
+            pthread_mutex_lock(&print_mutex);
+            printf("Thread 3 (Camera) received message: Multithreading Testing\n");
+            pthread_mutex_unlock(&print_mutex);
+            break;  // Exit after printing the message
+        }
+    }
+    return NULL;
+}
+
+//This function is the thread dedicated to operating data processing and Tx,RX comms
+void * data_work(void * arg)
+{
+     while (1) {
+        if (trigger_threads) {
+            pthread_mutex_lock(&print_mutex);
+            printf("Thread 4 (Data) received message: Multithreading Testing\n");
+            pthread_mutex_unlock(&print_mutex);
+            break;  // Exit after printing the message
+        }
+    }
+    return NULL;
 }

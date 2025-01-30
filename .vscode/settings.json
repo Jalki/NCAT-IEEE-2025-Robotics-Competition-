@@ -62,6 +62,8 @@
     "IR_Avoidance.C": "cpp",
     "PhotoresistorOperation.C": "cpp",
     "ThreadingTest.C": "cpp",
-    "WiringPiCheck.C": "cpp"
+    "WiringPiCheck.C": "cpp",
+    "MotorControl.C": "cpp",
+    "ArduinoBLE_Read.C": "cpp"
   }
 }
