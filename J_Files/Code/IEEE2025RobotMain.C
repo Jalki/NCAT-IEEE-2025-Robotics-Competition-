@@ -115,17 +115,19 @@ int main(void){
         perror("pthread_create for thread 3 failed");
     }
 
-    if (pthread_create(&thrd_1, NULL, actuactors_work, NULL) != 0){
+    if (pthread_create(&thrd_4, NULL, data_work, NULL) != 0){
         perror("pthread_create for thread 4 failed");
     }
 
-    StateTrans();
-    // Wait for the threads to finish
-    pthread_join(thrd_1, NULL);
-    pthread_join(thrd_2, NULL);
-    pthread_join(thrd_3, NULL);
-    pthread_join(thrd_4, NULL);
-    return 0;
+    while(State > 0){
+        StateTrans();
+        // Wait for the threads to finish
+        pthread_join(thrd_1, NULL);
+        pthread_join(thrd_2, NULL);
+        pthread_join(thrd_3, NULL);
+        pthread_join(thrd_4, NULL);
+        return 0;
+    }
 }
 
 //This function is the thread dedicated to operating actuactors
