@@ -1,0 +1,54 @@
+#include <Wire.h>
+
+int motorIna = 12;
+int motorInb = 11;
+
+int encoderA = 9;  // Encoder A pin
+int encoderB = 8;  // Encoder B pin
+
+bool presentStateA;
+bool lastStateA;
+
+unsigned long pulsesA = 0;
+
+void setup() {
+  // Set motor control pins as OUTPUT
+  pinMode(motorIna, OUTPUT);
+  pinMode(motorInb, OUTPUT);
+
+  // Set encoder pins as INPUT
+  pinMode(encoderA, INPUT);
+  pinMode(encoderB, INPUT);
+
+  // Initialize Serial
+  Serial1.begin(9600);  // Correct baud rate
+  lastStateA = digitalRead(encoderA); // Initialize last state
+}
+
+void loop() {
+  // Motor control
+  digitalWrite(motorIna, HIGH);
+  digitalWrite(motorInb, LOW);
+
+  // Read encoder state
+  presentStateA = digitalRead(encoderA);
+
+  // Detect state change (rising or falling edge)
+
+  if (presentStateA != lastStateA) {
+    pulsesA++; // Count both rising and falling edges
+  }
+  
+  lastStateA = presentStateA; // Update last state
+
+  // Print pulse count
+  Serial1.print("PulsesA: ");
+  Serial1.println(pulsesA);
+
+  if (pulsesA == 10) {
+    digitalWrite(motorIna, LOW);
+    digitalWrite(motorInb, LOW);
+  }
+
+  delay(1000); // Small delay to avoid excessive printing. Unit: Milliseconds
+}
