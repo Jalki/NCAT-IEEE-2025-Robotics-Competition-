@@ -45,5 +45,10 @@ void loop() {
   Serial1.print("PulsesA: ");
   Serial1.println(pulsesA);
 
+  if (pulsesA == 10) {
+    digitalWrite(motorIna, LOW);
+    digitalWrite(motorInb, LOW);
+  }
+
   delay(1000); // Small delay to avoid excessive printing. Unit: Milliseconds
 }
