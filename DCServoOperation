@@ -21,7 +21,7 @@ void setup() {
   pinMode(encoderB, INPUT);
 
   // Initialize Serial
-  Serial.begin(9600);  // Correct baud rate
+  Serial1.begin(9600);  // Correct baud rate
   lastStateA = digitalRead(encoderA); // Initialize last state
 }
 
@@ -34,6 +34,7 @@ void loop() {
   presentStateA = digitalRead(encoderA);
 
   // Detect state change (rising or falling edge)
+
   if (presentStateA != lastStateA) {
     pulsesA++; // Count both rising and falling edges
   }
@@ -41,8 +42,8 @@ void loop() {
   lastStateA = presentStateA; // Update last state
 
   // Print pulse count
-  Serial.print("PulsesA: ");
-  Serial.println(pulsesA);
+  Serial1.print("PulsesA: ");
+  Serial1.println(pulsesA);
 
-  delay(10); // Small delay to avoid excessive printing
+  delay(1000); // Small delay to avoid excessive printing. Unit: Milliseconds
 }
