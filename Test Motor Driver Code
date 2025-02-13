@@ -1,0 +1,24 @@
+/*
+Current Problem: The Motor Driver is receiving power, and both of the DS lights turn on when properly powered, but no power is being supplied to the DC motor. 
+Motor Driver: DROK DC Motor Driver, L298 Dual H Bridge SKU: 200206
+The datasheet for the motor driver is in the Google Drive.
+*/
+
+int sec = 1000; #Converts Milliseconds to Seconds
+#define ENA 0 #Analog Pin: 0
+#define IN1 10 #Digitall Pin: 10
+#define IN2 9 #Digitall Pin: 9
+
+void setup() {
+  Serial1.begin(9600);  // Correct baud rate
+  pinMode(ENA, OUTPUT);
+  pinMode(IN1, OUTPUT);
+  pinMode(IN2, OUTPUT);
+}
+
+void loop() {
+  digitalWrite(IN1, HIGH); //This should be Motor +; does not matter which one
+  digitalWrite(IN2, LOW); //This should be Motor -; does not matter which one
+  analogWrite(ENA, 255); //This analog signal controls the speed of the motor; Range: 0 -255
+  delay(sec*1); //Delay of 1 seconds
+}
