@@ -1,24 +1,53 @@
-/*
-Current Problem: The Motor Driver is receiving power, and both of the DS lights turn on when properly powered, but no power is being supplied to the DC motor. 
-Motor Driver: DROK DC Motor Driver, L298 Dual H Bridge SKU: 200206
-The datasheet for the motor driver is in the Google Drive.
-*/
+int D1IN1pin = 12; 
+int D1IN2pin = 13;  
+int D1ENA1pin = 10;  
 
-int sec = 1000; #Converts Milliseconds to Seconds
-#define ENA 0 #Analog Pin: 0
-#define IN1 10 #Digitall Pin: 10
-#define IN2 9 #Digitall Pin: 9
+int D1ENA2pin = 10; 
+int D1IN3pin = 9;
+int D1IN4pin= 8;  
+
+int D2IN1pin = 5;
+int D2IN2pin = 6;
+int D2ENA1pin = 7;
+
+int D2ENA2pin = 3;
+int D2IN3pin = 4; 
+int D2IN4pin= 2; 
 
 void setup() {
-  Serial1.begin(9600);  // Correct baud rate
-  pinMode(ENA, OUTPUT);
-  pinMode(IN1, OUTPUT);
-  pinMode(IN2, OUTPUT);
+  // initiate (configure) Arduino pins as outputs
+  pinMode(D1IN1pin, OUTPUT);
+  pinMode(D1IN2pin, OUTPUT);
+  pinMode(D1ENA1pin, OUTPUT);
+
+  pinMode(D1IN3pin, OUTPUT);
+  pinMode(D1IN4pin, OUTPUT);
+  pinMode(D1ENA2pin, OUTPUT);
+
+  pinMode(D2IN1pin, OUTPUT);
+  pinMode(D2IN2pin, OUTPUT);
+  pinMode(D2ENA1pin, OUTPUT);
+
+  pinMode(D2IN3pin, OUTPUT);
+  pinMode(D2IN4pin, OUTPUT);
+  pinMode(D2ENA2pin, OUTPUT);
 }
 
 void loop() {
-  digitalWrite(IN1, HIGH); //This should be Motor +; does not matter which one
-  digitalWrite(IN2, LOW); //This should be Motor -; does not matter which one
-  analogWrite(ENA, 255); //This analog signal controls the speed of the motor; Range: 0 -255
-  delay(sec*1); //Delay of 1 seconds
+  //turn motor in one direction (usually clockwise)
+  digitalWrite(D1IN1pin, HIGH);
+  digitalWrite(D1IN2pin, LOW);
+  analogWrite(D1ENA1pin, 255);
+  
+  digitalWrite(D1IN3pin, HIGH);
+  digitalWrite(D1IN4pin, LOW);
+  analogWrite(D1ENA2pin, 255); // enter a number from 0 to 255
+
+  digitalWrite(D2IN1pin, HIGH);
+  digitalWrite(D2IN2pin, LOW);
+  analogWrite(D2ENA1pin, 255);
+  
+  digitalWrite(D2IN3pin, HIGH);
+  digitalWrite(D2IN4pin, LOW);
+  analogWrite(D2ENA2pin, 255); // enter a number from 0 to 255
 }
