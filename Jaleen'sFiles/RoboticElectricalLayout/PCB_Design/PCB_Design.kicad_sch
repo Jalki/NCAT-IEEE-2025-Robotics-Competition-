@@ -1,0 +1,82 @@
+(kicad_sch
+	(version 20231120)
+	(generator "eeschema")
+	(generator_version "8.0")
+	(uuid "21a2fed9-df5b-41e5-bf8d-c4ba48b6c94d")
+	(paper "A4")
+	(title_block
+		(title "IEEE Robot Schematic")
+	)
+	(lib_symbols)
+	(rectangle
+		(start 116.84 179.07)
+		(end 116.84 179.07)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(fill
+			(type none)
+		)
+		(uuid 74f7e0a5-1bbb-4fd5-8031-bfabaeb7db66)
+	)
+	(rectangle
+		(start 16.51 13.97)
+		(end 60.96 160.02)
+		(stroke
+			(width 1)
+			(type default)
+			(color 255 0 4 1)
+		)
+		(fill
+			(type none)
+		)
+		(uuid 8d0c4189-1c9d-4670-8272-50e572bd08f2)
+	)
+	(rectangle
+		(start 59.69 172.72)
+		(end 220.98 198.12)
+		(stroke
+			(width 1)
+			(type default)
+			(color 255 49 212 1)
+		)
+		(fill
+			(type none)
+		)
+		(uuid bc4407f8-6434-44d3-9388-2532c5fa0392)
+	)
+	(text_box "Motor Driver Boards"
+		(exclude_from_sim no)
+		(at 16.51 45.72 0)
+		(size 44.45 72.39)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(fill
+			(type none)
+		)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "3c350acf-cdc7-43d0-8d8f-8be60d0058e1")
+	)
+	(text "Arduino Headers"
+		(exclude_from_sim no)
+		(at 135.382 184.404 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "f88876c7-f38f-4020-910b-6426bc762f0b")
+	)
+	(sheet_instances
+		(path "/"
+			(page "1")
+		)
+	)
+)
