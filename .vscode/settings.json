@@ -65,6 +65,7 @@
     "WiringPiCheck.C": "cpp",
     "MotorControl.C": "cpp",
     "ArduinoBLE_Read.C": "cpp",
-    "UART_Comms.C": "cpp"
+    "UART_Comms.C": "cpp",
+    "Test.C": "cpp"
   }
 }
