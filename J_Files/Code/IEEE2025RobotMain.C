@@ -1,7 +1,16 @@
 #include <stdio.h>
 #include <pthread.h>
+#include <Python.h>
 #include <wiringPi.h>
 #include <wiringPiSPI.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <termios.h>
+
+#define UART_PORT "/dev/ttyAMA0"
+#define BAUDRATE B9600
 //#include "PhotoresistorOperation.C"
 //#include "IR_Avoidance.C"
 //include "AprilTag.C"
@@ -184,4 +193,64 @@ void * data_work(void * arg)
         }
     }
     return NULL;
+}
+
+int setup_uart() {
+    int uart_fd = open(UART_PORT, O_RDWR | O_NOCTTY | O_NDELAY);
+    if (uart_fd == -1) {
+        perror("Failed to open UART");
+        return -1;
+    }
+    
+    struct termios options;
+    tcgetattr(uart_fd, &options);
+    cfsetispeed(&options, BAUDRATE);
+    cfsetospeed(&options, BAUDRATE);
+    options.c_cflag = CS8 | CLOCAL | CREAD;
+    options.c_iflag = IGNPAR;
+    options.c_oflag = 0;
+    options.c_lflag = 0;
+    tcflush(uart_fd, TCIFLUSH);
+    tcsetattr(uart_fd, TCSANOW, &options);
+    
+    return uart_fd;
+}
+
+void send_data(int uart_fd, const char *data) {
+    if (uart_fd != -1) {
+        int count = write(uart_fd, data, strlen(data));
+        if (count < 0) {
+            perror("UART TX error");
+        } else {
+            printf("Sent: %s\n", data);
+        }
+    } else {
+        printf("UART port not open.\n");
+    }
+}
+
+void receive_data(int uart_fd) {
+    if (uart_fd != -1) {
+        char buffer[256];
+        int length = read(uart_fd, buffer, sizeof(buffer) - 1);
+        if (length < 0) {
+            perror("UART RX error");
+        } else {
+            buffer[length] = '\0';
+            printf("Received: %s\n", buffer);
+        }
+    } else {
+        printf("UART port not open.\n");
+    }
+}
+
+int main() {
+    int uart_fd = setup_uart();
+    if (uart_fd == -1) return 1;
+    
+    send_data(uart_fd, "Hello UART");
+    receive_data(uart_fd);
+    
+    close(uart_fd);
+    return 0;
 }
