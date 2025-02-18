@@ -1,6 +1,8 @@
 import cv2
 import apriltag
 import numpy as np
+import serial
+import time
 
 LINE_LENGTH = 5
 CENTER_COLOR = (0, 255, 0)
@@ -31,7 +33,11 @@ cam = cv2.VideoCapture(0)
 # Example camera parameters (fx, fy, cx, cy). Replace with actual calibration values.
 camera_matrix = np.array([[600, 0, 320], [0, 600, 240], [0, 0, 1]], dtype=np.float32)
 dist_coeffs = np.zeros(4)  # Assuming no lens distortion
-tag_size = 0.16  # Example tag size in meters
+tag_size = 0.1 # Example tag size in meters
+
+# Initialize Serial Communication
+ser = serial.Serial('/dev/ttyAMA0', 9600, timeout=1)  # Adjust for Raspberry Pi
+time.sleep(2)  # Wait for serial connection to establish
 
 looping = True
 while looping:
@@ -45,6 +51,12 @@ while looping:
         for detect in detections:
             z_depth = estimate_depth(detect, camera_matrix, dist_coeffs, tag_size)
             print(f"Tag ID: {detect.tag_id}, Depth: {z_depth:.2f} meters")
+            
+            # Send Z-depth value over UART
+            message = f"Z:{z_depth:.2f}\n"
+            ser.write(message.encode())  # Send as bytes
+            time.sleep(0.1)  # Avoid flooding serial buffer
+            
             image = plotPoint(image, detect.center, CENTER_COLOR)
             image = plotText(image, detect.center, CENTER_COLOR, f"ID: {detect.tag_id}, Z: {z_depth:.2f}m")
             for corner in detect.corners:
@@ -57,3 +69,6 @@ while looping:
 
 cv2.destroyAllWindows()
 cv2.imwrite("final.png", image)
+
+
+
