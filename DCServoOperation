@@ -1,54 +1,148 @@
 #include <Wire.h>
+#include <stdlib.h> 
 
-int motorIna = 12;
-int motorInb = 11;
+int D1ENA1pin = 12; // Arduino pin that the motor driver IN1 pin is connected to
+int D1IN1pin = 11; // Arduino pin that the motor driver IN2 pin is connected to
+int D1IN2pin = 10; // Arduino PWM pin that the motor driver ENA pin is connected to 
 
-int encoderA = 9;  // Encoder A pin
-int encoderB = 8;  // Encoder B pin
+int D1ENA2pin = 9; // Change to a different PWM pin for D1
+int D1IN3pin = 8; // Arduino pin that the motor driver IN3 pin is connected to
+int D1IN4pin = 7; // Arduino PWM pin that the motor driver ENA pin is connected to 
 
-bool presentStateA;
-bool lastStateA;
+int D2ENA1pin = 14; // Arduino PWM pin that the motor driver ENA pin is connected to 
+int D2IN1pin = 15; // Arduino pin that the motor driver IN1 pin is connected to
+int D2IN2pin = 16; // Arduino pin that the motor driver IN2 pin is connected to
+
+int D2ENA2pin = 17; // Change to a different PWM pin for D2
+int D2IN3pin = 18; // Arduino pin that the motor driver IN3 pin is connected to
+int D2IN4pin = 19; // Arduino PWM pin that the motor driver ENA pin is connected to 
+
+int presentState;
+int previousState;
 
 unsigned long pulsesA = 0;
 
+int pwm = 255;
+int sec = 1000; //converts milliseconds to seconds in the delay function.
+
+int pwm_states[11] = {0, 25, 50, 75, 100, 125, 150, 175, 200, 225, 250};
+
+/*
+This function returns a random value from min <= x <= max.
+Must an int value.
+
+input:
+  int min: The lower bound of the random value being returned.
+  int max: The upper bound of the random value being returned.
+
+output:
+  A random value in between the lower and upper bounds. 
+*/
+
+int random_int(int min, int max) {
+    return min + rand() % (max - min + 1);
+}
+
+/*
+This function returns a random value from min <= x <= max.
+Must a float value.
+
+input:
+  int min: The lower bound of the random value being returned.
+  int max: The upper bound of the random value being returned.
+
+output:
+  A random value in between the lower and upper bounds. 
+*/
+float random_float(int min, int max) {
+    return min + rand() / (max - min + 1);
+}
+
 void setup() {
-  // Set motor control pins as OUTPUT
-  pinMode(motorIna, OUTPUT);
-  pinMode(motorInb, OUTPUT);
+  // initiate (configure) Arduino pins as outputs
+  pinMode(D1IN1pin, OUTPUT);
+  pinMode(D1IN2pin, OUTPUT);
+  pinMode(D1ENA1pin, OUTPUT);
+  
+  
+  pinMode(D1IN3pin, OUTPUT);
+  pinMode(D1IN4pin, OUTPUT);
+  pinMode(D1ENA2pin, OUTPUT);
 
-  // Set encoder pins as INPUT
-  pinMode(encoderA, INPUT);
-  pinMode(encoderB, INPUT);
+  pinMode(D2IN1pin, OUTPUT);
+  pinMode(D2IN2pin, OUTPUT);
+  pinMode(D2ENA1pin, OUTPUT);
 
-  // Initialize Serial
-  Serial1.begin(9600);  // Correct baud rate
-  lastStateA = digitalRead(encoderA); // Initialize last state
+  pinMode(D2IN3pin, OUTPUT);
+  pinMode(D2IN4pin, OUTPUT);
+  pinMode(D2ENA2pin, OUTPUT);
+
+  
+  //Begins the serial communication at a baud rate of 9600 bps.
+  Serial1.begin(9600); 
+
+  //while (!Serial);  // Wait for the serial port to open on boards like Leonardo
+
+  // Initialize last state
+  previousState = 0;
+
 }
 
 void loop() {
-  // Motor control
-  digitalWrite(motorIna, HIGH);
-  digitalWrite(motorInb, LOW);
+  // Turn motor in one direction (usually clockwise)
+  digitalWrite(D1IN1pin, HIGH);
+  digitalWrite(D1IN2pin, LOW);
+  analogWrite(D1ENA1pin, pwm);
 
-  // Read encoder state
-  presentStateA = digitalRead(encoderA);
+  digitalWrite(D1IN3pin, LOW);
+  digitalWrite(D1IN4pin, HIGH);
+  analogWrite(D1ENA2pin, pwm);
 
-  // Detect state change (rising or falling edge)
+  digitalWrite(D2IN1pin, HIGH);
+  digitalWrite(D2IN2pin, LOW);
+  analogWrite(D2ENA1pin, pwm);
 
-  if (presentStateA != lastStateA) {
+  digitalWrite(D2IN3pin, HIGH);
+  digitalWrite(D2IN4pin, LOW);
+  analogWrite(D2ENA2pin, pwm); 
+
+  presentState = pwm;
+
+  if (presentState != previousState) {
     pulsesA++; // Count both rising and falling edges
   }
   
-  lastStateA = presentStateA; // Update last state
+  previousState = presentState; // Update last state
+  
+  pwm = pwm_states[random_int(0,10)]; //Changes the current pwm to a new one from the pwm_states.
 
-  // Print pulse count
+
+  //Prints the number of pulse changes that have happened.
   Serial1.print("PulsesA: ");
   Serial1.println(pulsesA);
 
-  if (pulsesA == 10) {
-    digitalWrite(motorIna, LOW);
-    digitalWrite(motorInb, LOW);
+
+  if (pulsesA >= 10) { //Turns off motor one when 10 pulse changes have been counted.
+    pwm = 0;
+    Serial1.print("WE'RE DONE HERE!");
+
+    digitalWrite(D1IN1pin, LOW);
+    digitalWrite(D1IN2pin, LOW);
+    analogWrite(D1ENA1pin, pwm);
+
+    digitalWrite(D1IN3pin, LOW);
+    digitalWrite(D1IN4pin, LOW);
+    analogWrite(D1ENA2pin, pwm);
+
+    digitalWrite(D2IN1pin, LOW);
+    digitalWrite(D2IN2pin, LOW);
+    analogWrite(D2ENA1pin, pwm);
+
+    digitalWrite(D2IN3pin, LOW);
+    digitalWrite(D2IN4pin, LOW);
+    analogWrite(D2ENA2pin, pwm); 
   }
 
-  delay(1000); // Small delay to avoid excessive printing. Unit: Milliseconds
+  delay(sec * 5);  // Wait 1 second before sending again
+  
 }
