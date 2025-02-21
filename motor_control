@@ -1,27 +1,26 @@
 #include <Wire.h>
 #include <stdlib.h> 
 
-int D1IN1pin = 12; // Arduino pin that the motor driver IN1 pin is connected to
-int D1IN2pin = 13; // Arduino pin that the motor driver IN2 pin is connected to
-int D1ENA1pin = 11; // Arduino PWM pin that the motor driver ENA pin is connected to 
+int D1ENA1pin = 12; // Arduino pin that the motor driver IN1 pin is connected to
+int D1IN1pin = 11; // Arduino pin that the motor driver IN2 pin is connected to
+int D1IN2pin = 10; // Arduino PWM pin that the motor driver ENA pin is connected to 
 
-int D1ENA2pin = 10; // Change to a different PWM pin for D1
-int D1IN3pin = 9; // Arduino pin that the motor driver IN3 pin is connected to
-int D1IN4pin = 8; // Arduino PWM pin that the motor driver ENA pin is connected to 
+int D1ENA2pin = 9; // Change to a different PWM pin for D1
+int D1IN3pin = 8; // Arduino pin that the motor driver IN3 pin is connected to
+int D1IN4pin = 7; // Arduino PWM pin that the motor driver ENA pin is connected to 
 
-int D2IN1pin = 7; // Arduino pin that the motor driver IN1 pin is connected to
-int D2IN2pin = 6; // Arduino pin that the motor driver IN2 pin is connected to
-int D2ENA1pin = 5; // Arduino PWM pin that the motor driver ENA pin is connected to 
+int D2ENA1pin = 14; // Arduino PWM pin that the motor driver ENA pin is connected to 
+int D2IN1pin = 15; // Arduino pin that the motor driver IN1 pin is connected to
+int D2IN2pin = 16; // Arduino pin that the motor driver IN2 pin is connected to
 
-int D2ENA2pin = 3; // Change to a different PWM pin for D2
-int D2IN3pin = 4; // Arduino pin that the motor driver IN3 pin is connected to
-int D2IN4pin = 2; // Arduino PWM pin that the motor driver ENA pin is connected to 
+int D2ENA2pin = 17; // Change to a different PWM pin for D2
+int D2IN3pin = 18; // Arduino pin that the motor driver IN3 pin is connected to
+int D2IN4pin = 19; // Arduino PWM pin that the motor driver ENA pin is connected to 
 
-bool presentStateA;
-bool lastStateA;
+int presentState;
+int previousState;
 
 unsigned long pulsesA = 0;
-unsigned long print_counter = 0;
 
 int pwm = 255;
 int sec = 1000; //converts milliseconds to seconds in the delay function.
@@ -80,12 +79,12 @@ void setup() {
 
   
   //Begins the serial communication at a baud rate of 9600 bps.
-  Serial.begin(9600);
+  Serial1.begin(9600); 
 
   //while (!Serial);  // Wait for the serial port to open on boards like Leonardo
 
-  lastStateA = digitalRead(D1IN1pin); // Initialize last state
-
+  // Initialize last state
+  previousState = 0;
 
 }
 
@@ -106,28 +105,45 @@ void loop() {
   digitalWrite(D2IN3pin, HIGH);
   digitalWrite(D2IN4pin, LOW);
   analogWrite(D2ENA2pin, pwm); 
+    
+  if (pulsesA >= 10) { //Turns off motor one when 10 pulse changes have been counted.
+    pwm = 0;
+    Serial1.println("WE'RE DONE HERE!");
 
-  presentStateA = digitalRead(D1IN1pin);
-
-  if (presentStateA != lastStateA) {
-    pulsesA++; // Count both rising and falling edges
-  }
-  
-  lastStateA = presentStateA; // Update last state
-  
-  pwm = pwm_states[random_int(0,10)]; //Changes the current pwm to a new one from the pwm_states.
-
-
-  //Prints the number of pulse changes that have happened.
-  Serial.print("PulsesA: ");
-  Serial.println(pulsesA);
-
-
-  if (pulsesA == 10) { //Turns off motor one when 10 pulse changes have been counted.
     digitalWrite(D1IN1pin, LOW);
     digitalWrite(D1IN2pin, LOW);
-  }
+    analogWrite(D1ENA1pin, pwm);
 
-  delay(sec * 1);  // Wait 1 second before sending again
+    digitalWrite(D1IN3pin, LOW);
+    digitalWrite(D1IN4pin, LOW);
+    analogWrite(D1ENA2pin, pwm);
+
+    digitalWrite(D2IN1pin, LOW);
+    digitalWrite(D2IN2pin, LOW);
+    analogWrite(D2ENA1pin, pwm);
+
+    digitalWrite(D2IN3pin, LOW);
+    digitalWrite(D2IN4pin, LOW);
+    analogWrite(D2ENA2pin, pwm); 
+        
+  } else {
+
+    presentState = pwm;
+
+    if (presentState != previousState) {
+      pulsesA++; // Count both rising and falling edges
+    }
+    
+    previousState = presentState; // Update last state
+    
+    pwm = pwm_states[random_int(0,10)]; //Changes the current pwm to a new one from the pwm_states.
+
+
+    //Prints the number of pulse changes that have happened.
+    Serial1.print("PulsesA: ");
+    Serial1.println(pulsesA);
+
+    delay(sec * 5);  // Wait 1 second before sending again
+  }
   
 }
