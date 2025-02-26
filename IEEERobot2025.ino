@@ -1,5 +1,3 @@
-
-
 int ard_sensor_check; //This is to make sure everything goes well with sensors
 
 #include "Arduino_BMI270_BMM150.h"
@@ -81,12 +79,12 @@ void loop() {
     case 0:
       Serial.prntln("BRO What????");
     case 1:
-      gryo_pulse();
+      gyro_pulse();
       accel_pulse();
   }
 }
 
-void gryo_pulse(){
+void gyro_pulse(){
   float x,y,z;
   if(IMU.gyroscopeAvailable()){
     IMU.readGyroscope(x,y,z)
@@ -180,25 +178,171 @@ void move_forward()
 {
   digitalWrite(D1IN1pin, HIGH);
   digitalWrite(D1IN2pin, LOW);
-  analogWrite(D1ENA1pin, pwm);
+  analogWrite(D1ENA1pin, pwm * 0.25);
 
-  digitalWrite(D1IN3pin, LOW);
-  digitalWrite(D1IN4pin, HIGH);
-  analogWrite(D1ENA2pin, pwm);
+  digitalWrite(D1IN3pin, HIGH);
+  digitalWrite(D1IN4pin, LOW);
+  analogWrite(D1ENA2pin, pwm * 0.25);
 
   digitalWrite(D2IN1pin, HIGH);
   digitalWrite(D2IN2pin, LOW);
-  analogWrite(D2ENA1pin, pwm);
+  analogWrite(D2ENA1pin, pwm * 0.25);
 
   digitalWrite(D2IN3pin, HIGH);
   digitalWrite(D2IN4pin, LOW);
-  analogWrite(D2ENA2pin, pwm);
+  analogWrite(D2ENA2pin, pwm * 0.25);
 }
 //Moves backwards
 void move_backward()
 {
+  digitalWrite(D1IN1pin, LOW);
+  digitalWrite(D1IN2pin, HIGH);
+  analogWrite(D1ENA1pin, pwm * 0.25);
+
+  digitalWrite(D1IN3pin, LOW);
+  digitalWrite(D1IN4pin, HIGH);
+  analogWrite(D1ENA2pin, pwm * 0.25);
+
+  digitalWrite(D2IN1pin, LOW);
+  digitalWrite(D2IN2pin, HIGH);
+  analogWrite(D2ENA1pin, pwm * 0.25);
+
+  digitalWrite(D2IN3pin, LOW);
+  digitalWrite(D2IN4pin, HIGH);
+  analogWrite(D2ENA2pin, pwm * 0.25);
+}
+
+//This moves the robot to the right via strafe
+void move_Strafe_Right(){
   digitalWrite(D1IN1pin, HIGH);
   digitalWrite(D1IN2pin, LOW);
+  analogWrite(D1ENA1pin, pwm * 0.25);
+
+  digitalWrite(D1IN3pin, LOW);
+  digitalWrite(D1IN4pin, HIGH);
+  analogWrite(D1ENA2pin, pwm * 0.25);
+
+  digitalWrite(D2IN1pin, HIGH);
+  digitalWrite(D2IN2pin, LOW);
+  analogWrite(D2ENA1pin, pwm * 0.25);
+
+  digitalWrite(D2IN3pin, LOW);
+  digitalWrite(D2IN4pin, HIGH);
+  analogWrite(D2ENA2pin, pwm * 0.25);
+}
+//This moves the robot to the left via strafe
+void move_Strafe_Left(){
+  digitalWrite(D1IN1pin, LOW);
+  digitalWrite(D1IN2pin, HIGH);
+  analogWrite(D1ENA1pin, pwm * 0.25);
+
+  digitalWrite(D1IN3pin, HIGH);
+  digitalWrite(D1IN4pin, LOW);
+  analogWrite(D1ENA2pin, pwm * 0.25);
+
+  digitalWrite(D2IN1pin, LOW);
+  digitalWrite(D2IN2pin, HIGH);
+  analogWrite(D2ENA1pin, pwm * 0.25);
+
+  digitalWrite(D2IN3pin, HIGH);
+  digitalWrite(D2IN4pin, LOW);
+  analogWrite(D2ENA2pin, pwm * 0.25);
+}
+//This moves the robot diagonally top right
+void move_Diagonal_Top_Right(){
+  digitalWrite(D1IN1pin, HIGH);
+  digitalWrite(D1IN2pin, LOW);
+  analogWrite(D1ENA1pin, pwm * 0.25);
+
+  digitalWrite(D1IN3pin, LOW);
+  digitalWrite(D1IN4pin, HIGH);
+  analogWrite(D1ENA2pin, pwm * 0);
+
+  digitalWrite(D2IN1pin, HIGH);
+  digitalWrite(D2IN2pin, LOW);
+  analogWrite(D2ENA1pin, pwm * 0);
+
+  digitalWrite(D2IN3pin, HIGH);
+  digitalWrite(D2IN4pin, LOW);
+  analogWrite(D2ENA2pin, pwm * 0.25);
+}
+//This moves the robot diagonally top left
+void move_Diagonal_Top_Left(){
+  digitalWrite(D1IN1pin, HIGH);
+  digitalWrite(D1IN2pin, LOW);
+  analogWrite(D1ENA1pin, pwm * 0);
+
+  digitalWrite(D1IN3pin, HIGH);
+  digitalWrite(D1IN4pin, LOW);
+  analogWrite(D1ENA2pin, pwm * 0.25);
+
+  digitalWrite(D2IN1pin, HIGH);
+  digitalWrite(D2IN2pin, LOW);
+  analogWrite(D2ENA1pin, pwm * 0.25);
+
+  digitalWrite(D2IN3pin, LOW);
+  digitalWrite(D2IN4pin, HIGH);
+  analogWrite(D2ENA2pin, pwm * 0);
+}
+//This moves the robot diagonally bottom left
+void move_Diagonal_Bottom_Left(){
+  digitalWrite(D1IN1pin, HIGH);
+  digitalWrite(D1IN2pin, LOW);
+  analogWrite(D1ENA1pin, pwm * 0);
+
+  digitalWrite(D1IN3pin, LOW);
+  digitalWrite(D1IN4pin, HIGH);
+  analogWrite(D1ENA2pin, pwm * 0.25);
+
+  digitalWrite(D2IN1pin, HIGH);
+  digitalWrite(D2IN2pin, LOW);
+  analogWrite(D2ENA1pin, pwm * 0);
+
+  digitalWrite(D2IN3pin, LOW);
+  digitalWrite(D2IN4pin, HIGH);
+  analogWrite(D2ENA2pin, pwm * 0.25);
+  
+}
+//This moves the robot diagonally bottom right
+void move_Diagonal_Bottom_Right(){
+  digitalWrite(D1IN1pin, LOW);
+  digitalWrite(D1IN2pin, HIGH);
+  analogWrite(D1ENA1pin, pwm * 0.25);
+
+  digitalWrite(D1IN3pin, HIGH);
+  digitalWrite(D1IN4pin, LOW);
+  analogWrite(D1ENA2pin, pwm * 0);
+
+  digitalWrite(D2IN1pin, HIGH);
+  digitalWrite(D2IN2pin, LOW);
+  analogWrite(D2ENA1pin, pwm * 0);
+
+  digitalWrite(D2IN3pin, LOW);
+  digitalWrite(D2IN4pin, HIGH);
+  analogWrite(D2ENA2pin, pwm * 0.25);
+}
+//Moves Clockwise
+void move_Rotate_Clockwise(){
+  digitalWrite(D1IN1pin, HIGH);
+  digitalWrite(D1IN2pin, LOW);
+  analogWrite(D1ENA1pin, pwm * 0.25);
+
+  digitalWrite(D1IN3pin, HIGH);
+  digitalWrite(D1IN4pin, LOW);
+  analogWrite(D1ENA2pin, pwm * 0.25);
+
+  digitalWrite(D2IN1pin, LOW);
+  digitalWrite(D2IN2pin, HIGH);
+  analogWrite(D2ENA1pin, pwm * 0.25);
+
+  digitalWrite(D2IN3pin, LOW);
+  digitalWrite(D2IN4pin, HIGH);
+  analogWrite(D2ENA2pin, pwm * 0.25);
+}
+//Moves Counter Clockwise
+void move_Rotate_CounterClockwise(){
+  digitalWrite(D1IN1pin, LOW);
+  digitalWrite(D1IN2pin, HIGH);
   analogWrite(D1ENA1pin, pwm * 0.25);
 
   digitalWrite(D1IN3pin, LOW);
@@ -213,23 +357,6 @@ void move_backward()
   digitalWrite(D2IN4pin, LOW);
   analogWrite(D2ENA2pin, pwm * 0.25);
 }
-
-//This moves the robot to the right via strafe
-void move_Strafe_Right(){}
-//This moves the robot to the left via strafe
-void move_Strafe_Left(){}
-//This moves the robot diagonally top right
-void move_Diagonal_Top_Right(){}
-//This moves the robot diagonally top left
-void move_Diagonal_Top_Left(){}
-//This moves the robot diagonally bottom left
-void move_Diagonal_Bottom_Left(){}
-//This moves the robot diagonally bottom right
-void move_Diagonal_Bottom_Right(){}
-//Moves Clockwise
-void move_Rotate_Clockwise(){}
-//Moves Counter Clockwise
-void move_Rotate_CounterClockwise(){}
 //Turn on its rear axis
 void move_Turn_RearAxis(){}
 //Turn on its front axis
