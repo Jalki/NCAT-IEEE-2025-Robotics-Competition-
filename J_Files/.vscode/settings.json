@@ -57,17 +57,7 @@
   "C_Cpp_Runner.useLinkTimeOptimization": false,
   "C_Cpp_Runner.msvcSecureNoWarnings": false,
   "files.associations": {
-    "AprilTag.C": "cpp",
-    "IEEE2025RobotMain.C": "cpp",
-    "IR_Avoidance.C": "cpp",
-    "PhotoresistorOperation.C": "cpp",
-    "ThreadingTest.C": "cpp",
-    "WiringPiCheck.C": "cpp",
-    "MotorControl.C": "cpp",
-    "ArduinoBLE_Read.C": "cpp",
-    "UART_Comms.C": "cpp",
-    "Test.C": "cpp",
-    "SendingFunctionsUART.C": "cpp"
-  },
-  "C_Cpp.errorSquiggles": "disabled"
+    "SendingFunctionsUART.C": "cpp",
+    "UART_Comms.C": "cpp"
+  }
 }
