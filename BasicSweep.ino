@@ -42,7 +42,7 @@ int pwm = 255;
 int sec = 1000; //converts milliseconds to seconds in the delay function.
 
 //Moves forward
-void move_forward() // forward good
+void move_forward()
 {
   digitalWrite(D1IN1pin, HIGH);
   digitalWrite(D1IN2pin, LOW);
@@ -62,7 +62,7 @@ void move_forward() // forward good
 }
 
 //Moves backwards
-void move_backward() // backards good
+void move_backward() 
 {
   digitalWrite(D1IN1pin, LOW);
   digitalWrite(D1IN2pin, HIGH);
@@ -82,7 +82,8 @@ void move_backward() // backards good
 }
 
 //This moves the robot to the right via strafe
-void move_Strafe_Right(){ // good
+void move_Strafe_Right()
+{ 
   digitalWrite(D1IN1pin, HIGH);
   digitalWrite(D1IN2pin, LOW);
   analogWrite(D1ENA1pin, pwm * 0.25);
@@ -100,7 +101,8 @@ void move_Strafe_Right(){ // good
   analogWrite(D2ENA2pin, pwm * 0.25);
 }
 //This moves the robot to the left via strafe
-void move_Strafe_Left(){ // is good
+void move_Strafe_Left()
+{ 
   digitalWrite(D1IN1pin, LOW);
   digitalWrite(D1IN2pin, HIGH);
   analogWrite(D1ENA1pin, pwm * 0.25);
@@ -118,7 +120,8 @@ void move_Strafe_Left(){ // is good
   analogWrite(D2ENA2pin, pwm * 0.25);
 }
 //This moves the robot diagonally top right
-void move_Diagonal_Top_Right(){ // is good 
+void move_Diagonal_Top_Right()
+{ 
   digitalWrite(D1IN1pin, HIGH);
   digitalWrite(D1IN2pin, LOW);
   analogWrite(D1ENA1pin, pwm * 0.25);
@@ -136,7 +139,8 @@ void move_Diagonal_Top_Right(){ // is good
   analogWrite(D2ENA2pin, pwm * 0.25);
 }
 //This moves the robot diagonally top left
-void move_Diagonal_Top_Left(){ // is good 
+void move_Diagonal_Top_Left()
+{ 
   digitalWrite(D1IN1pin, HIGH);
   digitalWrite(D1IN2pin, LOW);
   analogWrite(D1ENA1pin, pwm * 0);
@@ -154,7 +158,8 @@ void move_Diagonal_Top_Left(){ // is good
   analogWrite(D2ENA2pin, pwm * 0);
 }
 //This moves the robot diagonally bottom left
-void move_Diagonal_Bottom_Left(){ // is ass 
+void move_Diagonal_Bottom_Left()
+{
   digitalWrite(D1IN1pin, LOW);
   digitalWrite(D1IN2pin, HIGH);
   analogWrite(D1ENA1pin, pwm * 0.25);
@@ -173,8 +178,8 @@ void move_Diagonal_Bottom_Left(){ // is ass
   
 }
 //This moves the robot diagonally bottom right
-void move_Diagonal_Bottom_Right(){ // is ass 
-  digitalWrite(D1IN1pin, LOW);
+void move_Diagonal_Bottom_Right()
+{ 
   digitalWrite(D1IN2pin, HIGH);
   analogWrite(D1ENA1pin, pwm * 0);
 
@@ -191,7 +196,8 @@ void move_Diagonal_Bottom_Right(){ // is ass
   analogWrite(D2ENA2pin, pwm * 0);
 }
 //Moves Clockwise
-void move_Rotate_Clockwise(){ // is good 
+void move_Rotate_Clockwise()
+{
   digitalWrite(D1IN1pin, HIGH);
   digitalWrite(D1IN2pin, LOW);
   analogWrite(D1ENA1pin, pwm * 0.50);
@@ -209,7 +215,8 @@ void move_Rotate_Clockwise(){ // is good
   analogWrite(D2ENA2pin, pwm * 0.50);
 }
 //Moves Counter Clockwise
-void move_Rotate_CounterClockwise(){ //  is ass 
+void move_Rotate_CounterClockwise()
+{
   digitalWrite(D1IN1pin, LOW);
   digitalWrite(D1IN2pin, HIGH);
   analogWrite(D1ENA1pin, pwm * 0.50);
@@ -228,7 +235,8 @@ void move_Rotate_CounterClockwise(){ //  is ass
 }
 
 // Function to stop all motors
-void stop_movement() {
+void stop_movement()
+{
   digitalWrite(D1IN1pin, LOW);
   digitalWrite(D1IN2pin, LOW);
   digitalWrite(D1IN3pin, LOW);
