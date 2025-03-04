@@ -341,12 +341,12 @@ void rotate_gyro(float targetAngle) {
     bool clockwise = (targetAngle > 0);
     if (clockwise) {
         move_Rotate_Clockwise();
-    } else {_
+    } else {
         move_Rotate_CounterClockwise();
     }
 
     // **3. Rotate while compensating for drift**
-    while (abs(angleRotated) < abs(targetAngle)) {  
+    while (abs(angleRotated) <= abs(targetAngle)) {  
         if (IMU.gyroscopeAvailable()) {
             IMU.readGyroscope(gx, gy, gz);
             
@@ -365,6 +365,8 @@ void rotate_gyro(float targetAngle) {
     }
 
     stop_movement();  // Stop once the target angle is reached
+    Serial.print("Rotated");
+    Serial.println(angleRotated);
 }
 
 
