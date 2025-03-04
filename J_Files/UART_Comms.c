@@ -45,7 +45,7 @@ void configure_uart(int uart_fd) {
 long getMicrotime() {
     struct timeval currentTime;
     gettimeofday(&currentTime, NULL);
-    return currentTime.tv_sec * 1000000 + currentTime.tv_usec;
+    return currentTime .tv_sec * 1000000 + currentTime.tv_usec;
 }
 
 // Function to get distance from ultrasonic sensor
@@ -185,7 +185,7 @@ int main() {
                 }
             }
         }else{
-            printf("YOU DONE FUCKED UP!");
+            printf("SOMETHING GOOFED UP");
         }
     }
 
