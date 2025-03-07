@@ -24,7 +24,23 @@ int D2IN4pin = 19; // Arduino PWM pin that the motor driver ENA pin is connected
 int presentState;
 int previousState;
 
+const int photoPin = A0; // Analog pin connected to the photoresistor
+int state = 0;          // 0 = calibration, 1 = start LED, 2 = normal state, 3 = cave state
+float pde = 0.00;
+float pde_h = 0.00;     // PDE +20% 
+float pde_l = 0.00;     // PDE -20%
+float pdel[2];          // Array for averages of pde_h and pde_l
+float pdex = 0.00;      // PDE at the current time
+float ptime = 0.00;       // Current time counter
+
 unsigned long pulsesA = 0;
+
+float positionX = 0, positionY = 0, velocityX = 0, velocityY = 0;
+float accelDriftX = 0, accelDriftY = 0;
+float gyroDriftZ = 0;
+
+#define ACCEL_NOISE_THRESHOLD 0.02  // Adjust based on testing
+#define VELOCITY_DAMPING 0.98  // Reduces velocity gradually over time
 
 int pwm = 255;
 int sec = 1000; //converts milliseconds to seconds in the delay function.
@@ -32,21 +48,18 @@ int sec = 1000; //converts milliseconds to seconds in the delay function.
 String incomingString = "";
 
 void setup() {
+  Serial.begin(9600);
   Serial1.begin(9600);
   while (!Serial);
-  Serial1.println("Started");
+  Serial1.println("Started Communication with Raspberry Pi");
 
   if (!IMU.begin()) {
     Serial.println("Failed to initialize IMU!");
     ard_sensor_check = -1;
     while (1);
   }
-  Serial.print("Gyroscope sample rate = ");
-  Serial.print(IMU.gyroscopeSampleRate());
-  Serial.println(" Hz");
-  Serial.println();
-  Serial.println("Gyroscope in degrees/second");
-  Serial.println("X\tY\tZ");
+  ard_sensor_check = 1;
+  pinMode(photoPin, INPUT_PULLUP); // Set analog pin A0 as input
 
   // initiate (configure) Arduino pins as outputs
   pinMode(D1IN1pin, OUTPUT);
@@ -71,109 +84,232 @@ void setup() {
 }
 
 void loop() {
+  control_movement();
+  int sensorValue = analogRead(photoPin); // Read the analog value from the photoresistor
+  float voltage = sensorValue * (5.0 / 1023.0); // Convert analog value to voltage
+  float resistance = (voltage * 50000) / (5.0 - voltage); // Calculate resistance
+  pde = (resistance / voltage); // PDE calculation
 
-  switch(ard_sensor_check)
-  {
-    case -1:
-      Serial.println("Something went seriously wrong? Check your wires and pray its not another faulty Arduino!");
-    case 0:
-      Serial.println("BRO What????");
-    case 1:
-      gyro_pulse();
-      accel_pulse();
-  }
+  //Serial.print("Voltage: ");
+  //Serial.print(voltage);
+  //Serial.print(" V, Resistance: ");
+  //Serial.print(resistance);
+  //Serial.println(" ohms");
+  //Serial.print("Photoresistor Equivalent Data (PDE): ");
+  //Serial.println(pde);
+  //statemachine();
 }
 
-void gyro_pulse(){
-  float x,y,z;
-  if(IMU.gyroscopeAvailable()){
-    IMU.readGyroscope(x,y,z)
-    ard_sensor_check = 1;
-    Serial1.print(x);
-    Serial1.print('\t');
-    Serial1.print(y);
-    Serial1.print('\t');
-    Serial1.println(z);
-  }
-  else{
-    ard_sensor_check = 0;
-  }
-}
-void accel_pulse(){
-  float x,y,z
-  int degreesX;
-  int degreesY;
-  if(IMU.accelerationAvailable()){
-    IMU.readAcceleration(x,y,z);
-    if(x > 0.1){
-      x = 100 * x;
-      degreesX = map(x, 0, 97, 0, 90);
-      Serial1.print("Tilting up ");
-      Serial1.print(degreesX);
-      Serial1.println(" degrees");
+void statemachine(){
+  if (Serial1.available()) {
+        char state = Serial1.read();  // Read state
+
+        Serial.print("Received State: ");
+        Serial.println(state);
+
+        switch (state) {
+            case '0': 
+              Serial.println("State 0 - Calibration");
+              ALSAVG();
+              origin_accel();
+            case '1': 
+              Serial.println("State 1 - Start Signal");
+              PDEX();
+            case '2': 
+              Serial.println("State 2 - Normal Condition");
+              PDEX();
+              control_movement();
+            case '3': 
+              Serial.println("State 3 - Cave Condition");
+              PDEX();
+              control_movement();
+            default: 
+              Serial.println("Unknown State");
+        }
     }
-    if(x < -0.1){
-      x = 100 * x;
-      degreesX = map(x, 0 , -100, 0, 90);
-      Serial1.print("Tilting down ");
-      Serial1.print(degreesX);
-      Serial1.println(" degrees");
-    }
-    if(y > 0.1){
-      y = 100 * y;
-      degreesY = map(y, 0, 97, 0, 90);
-      Serial1.print("Tilting left ");
-      Serial1.print(degreesY);
-      Serial1.println(" degrees");
-    }
-    if(y < -0.1){
-      y = 100 * y;
-      degreesY = map(y, 0, -100, 0, 90);
-      Serial1.print("Tilting right ");
-      Serial1.print(degreesY);
-      Serial1.print(" degrees");
-    }
-  }
 }
 
-void uart_read(){
-  if (Serial1.available() > 0){
-    //This will read the uart data sent to it
-    int inChar = Serial1.read();
-    if (isDigit(inChar)){
-      incomingString += (char)inChar;
-    }
-    if (inChar == '\n'){
-      Serial.print("Value: ");
-      Serial1.println(incomingString.toInt());
-      Serial1.println(incomingString);
-      incomingString = "";
-    }
-    switch(inChar)
-      case 1:
-        move_forward();
-      case 2:
-        move_backward();
-      case 3:
-        move_Strafe_Right();
-      case 4:
-        move_Strafe_Left();
-      case 5:
+// Calculate room ambient light source average
+void ALSAVG() {
+  float pdel_h = pde * 1.20;
+  float pdel_l = pde * 0.80;
+  float pdel_harr[10];
+  float pdel_larr[10];
+
+  for (int i = 0; i < 10; i++) {
+    pdel_harr[i] = pdel_h;
+    pdel_larr[i] = pdel_l;
+  }
+
+  // Calculate average for pdel_harr
+  float sum_h = 0.0;
+  for (int i = 0; i < 10; i++) {
+    sum_h += pdel_harr[i];
+  }
+  pde_h = sum_h / 10;
+
+  // Calculate average for pdel_larr
+  float sum_l = 0.0;
+  for (int i = 0; i < 10; i++) {
+    sum_l += pdel_larr[i];
+  }
+  pde_l = sum_l / 10;
+
+  //Serial.print("Average pde_h: ");
+  Serial1.println(pde_h);
+  //Serial.print("Average pde_l: ");
+  Serial1.println(pde_l);
+} 
+
+void PDEX() {
+  pdex = pde; // Assign current pde to pdex
+}
+
+//Directly control the movement of the robot based on uart input from the raspberry pi. 
+void control_movement() {
+  pos_accel(0.00, 0.01);
+  stop_movement();
+  delay(300);
+  pos_accel(-0.02, 0.00);
+  stop_movement();
+  pos_accel(0.03, -0.03);
+}
+
+
+void navigate_to_origin() {
+    float deltaX = -positionX; // Distance to move back to origin in X
+    float deltaY = -positionY; // Distance to move back to origin in Y
+
+    if (deltaX > 0 && deltaY > 0) {
         move_Diagonal_Top_Right();
-      case 6:
+    } else if (deltaX < 0 && deltaY > 0) {
         move_Diagonal_Top_Left();
-      case 7:
+    } else if (deltaX < 0 && deltaY < 0) {
         move_Diagonal_Bottom_Left();
-      case 8:
+    } else if (deltaX > 0 && deltaY < 0) {
         move_Diagonal_Bottom_Right();
-      case 9:
-        move_Rotate_Clockwise();
-      case 10:
-        move_Rotate_CounterClockwise();
-  }
+    } else if (deltaX > 0) {
+        move_Strafe_Right();
+    } else if (deltaX < 0) {
+        move_Strafe_Left();
+    } else if (deltaY > 0) {
+        move_forward();
+    } else if (deltaY < 0) {
+        move_backward();
+    }
+    
+    // Reset position after reaching origin
+    positionX = 0;
+    positionY = 0;
+    stop_movement();
 }
 
-//Moves the robot forward
+void pos_accel(float targetDistanceX, float targetDistanceY) {
+    float ax, ay, az;
+    if (IMU.accelerationAvailable()) {
+        IMU.readAcceleration(ax, ay, az);
+        ax -= accelDriftX;
+        ay -= accelDriftY;
+        Serial.println(ax);
+        Serial.println(ay);
+        if (abs(ax) < ACCEL_NOISE_THRESHOLD) ax = 0;
+        if (abs(ay) < ACCEL_NOISE_THRESHOLD) ay = 0;
+        velocityX = velocityX * VELOCITY_DAMPING + ax * 0.02;
+        velocityY = velocityY * VELOCITY_DAMPING + ay * 0.02;
+        Serial.print(velocityX);
+        Serial.print(velocityY);
+        positionX += velocityX * 0.02;
+        positionY += velocityY * 0.02;
+        Serial.print("Position: X = ");
+        Serial.print(positionX);
+        //Serial1.println(positionX);
+        Serial.print(" Y = ");
+        Serial.println(positionY);
+        //Serial1.print(positionY);
+    }
+}
+
+//Gives the original position of robot for the Raspberry pi to store
+void origin_accel(){
+  float ax, ay, az;
+    if (IMU.accelerationAvailable()) {
+        IMU.readAcceleration(ax, ay, az);
+        ax -= accelDriftX;
+        ay -= accelDriftY;
+        if (abs(ax) < ACCEL_NOISE_THRESHOLD) ax = 0;
+        if (abs(ay) < ACCEL_NOISE_THRESHOLD) ay = 0;
+        velocityX = velocityX * VELOCITY_DAMPING + ax * 0.02;
+        velocityY = velocityY * VELOCITY_DAMPING + ay * 0.02;
+        Serial.println(velocityX);
+        Serial.println(velocityY);
+        positionX = velocityX * 0.02;
+        positionY = velocityY * 0.02;
+        Serial.println(positionX);
+        Serial.println(positionY);
+    }
+}
+
+void rotate_gyro(float targetAngle) {
+    float angleRotated = 0;
+    float gx, gy, gz;
+    float gyroDrift = 0;
+    unsigned long prevTime = millis();
+
+    // **1. Measure drift before rotation**  
+    int numSamples = 50;
+    for (int i = 0; i < numSamples; i++) {
+        if (IMU.gyroscopeAvailable()) {
+            IMU.readGyroscope(gx, gy, gz);
+            gyroDrift += gz;  // Accumulate Z-axis drift
+        }
+        delay(10);  // Small delay between samples
+    }
+    gyroDrift /= numSamples;  // Average drift over samples
+
+    // **2. Determine rotation direction**
+    bool clockwise = (targetAngle > 0);
+    if (clockwise) {
+        move_Rotate_Clockwise();
+    } else {
+        move_Rotate_CounterClockwise();
+    }
+
+    // **3. Rotate while compensating for drift**
+    while (abs(angleRotated) <= abs(targetAngle)) {  
+        if (IMU.gyroscopeAvailable()) {
+            IMU.readGyroscope(gx, gy, gz);
+            
+
+            // Apply drift correction
+            gz -= gyroDrift;
+
+            // Compute time elapsed
+            unsigned long currentTime = millis();
+            float deltaTime = (currentTime - prevTime) / 1000.00; // Convert ms to seconds
+            prevTime = currentTime;
+
+            // Integrate gyroscope data to estimate angle rotated
+            angleRotated += gz * deltaTime;
+            Serial.println(angleRotated);
+        }
+    }
+    stop_movement();  // Stop once the target angle is reached
+}
+
+
+//These functions is to rotate a certain degrees. Its -1 degree to accomodate the chassis!
+void rotate_90_gyro() {
+    rotate_gyro(89.0);
+}
+
+void rotate_180_gyro() {
+    rotate_gyro(179.0);
+}
+
+void rotate_360_gyro() {
+    rotate_gyro(359.0);
+}
+
 //Moves forward
 void move_forward() 
 {
@@ -375,32 +511,3 @@ void stop_movement() {
   analogWrite(D2ENA1pin, 0);
   analogWrite(D2ENA2pin, 0);
 }
-
-//sweeps from the bottom left of the track. Modify to start from origin
-void sweep(){
-    move_forward();
-    delay(3200);
-    move_Rotate_Clockwise();
-    delay(1290);
-    move_forward();
-    delay(500);
-    move_Rotate_Clockwise();
-    delay(1290);
-    move_forward();
-    delay(3200);
-    move_Rotate_CounterClockwise();
-    delay(1290);
-    move_forward();
-    delay(500);
-    move_Rotate_CounterClockwise();
-    delay(1290);
-    move_forward();
-    delay(3200);
-    stop_movement();
-    delay(10000);
-}
-
-//Turn on its rear axis
-void move_Turn_RearAxis(){}
-//Turn on its front axis
-void move_Turn_FrontAxis(){}
