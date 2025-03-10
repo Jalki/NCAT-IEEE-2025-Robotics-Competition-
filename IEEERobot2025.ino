@@ -100,6 +100,7 @@ void loop() {
   //statemachine();
 }
 
+//Statemachine that correspond with the raspberry pi states to operate certain sensors
 void statemachine(){
   if (Serial1.available()) {
         char state = Serial1.read();  // Read state
@@ -166,6 +167,7 @@ void PDEX() {
 }
 
 //Directly control the movement of the robot based on uart input from the raspberry pi. 
+//Right now, the numbers for x and y needs to be relatively small, since our sensors produce a small number like 0.01, 0.04, etc
 void control_movement() {
   pos_accel(0.00, 0.01);
   stop_movement();
@@ -176,6 +178,7 @@ void control_movement() {
 }
 
 
+//Plan script to navigate to the origins (0,0) of the robot
 void navigate_to_origin() {
     float deltaX = -positionX; // Distance to move back to origin in X
     float deltaY = -positionY; // Distance to move back to origin in Y
@@ -204,6 +207,7 @@ void navigate_to_origin() {
     stop_movement();
 }
 
+//This script main function is to navigate to a set x and y position given by the raspberry pi via UART (look to the script above)
 void pos_accel(float targetDistanceX, float targetDistanceY) {
     float ax, ay, az;
     if (IMU.accelerationAvailable()) {
@@ -229,7 +233,7 @@ void pos_accel(float targetDistanceX, float targetDistanceY) {
     }
 }
 
-//Gives the original position of robot for the Raspberry pi to store
+//Gives the original position of robot for the Raspberry pi to store via UART
 void origin_accel(){
   float ax, ay, az;
     if (IMU.accelerationAvailable()) {
@@ -311,7 +315,7 @@ void rotate_360_gyro() {
 }
 
 //Moves forward
-void move_forward() 
+void move_Forward() 
 {
   digitalWrite(D1IN1pin, LOW);
   digitalWrite(D1IN2pin, HIGH);
@@ -331,7 +335,7 @@ void move_forward()
 }
 
 //Moves backwards
-void move_backward() 
+void move_Backward() 
 {
   digitalWrite(D1IN1pin, HIGH);
   digitalWrite(D1IN2pin, LOW);
