@@ -35,8 +35,8 @@ float ptime = 0.00;       // Current time counter
 
 unsigned long pulsesA = 0;
 
-float positionX = 0, positionY = 0, velocityX = 0, velocityY = 0;
-float accelDriftX = 0, accelDriftY = 0;
+float positionX = 0, positionZ = 0, velocityX = 0, velocityZ = 0;
+float accelDriftX = 0, accelDriftZ = 0;
 float gyroDriftZ = 0;
 
 #define ACCEL_NOISE_THRESHOLD 0.02  // Adjust based on testing
@@ -46,6 +46,8 @@ int pwm = 255;
 int sec = 1000; //converts milliseconds to seconds in the delay function.
 
 String incomingString = "";
+
+float positionalData[3] = {0.00, 0.00, 0.00};
 
 void setup() {
   Serial.begin(9600);
@@ -112,7 +114,6 @@ void statemachine(){
             case '0': 
               Serial.println("State 0 - Calibration");
               ALSAVG();
-              origin_accel();
             case '1': 
               Serial.println("State 1 - Start Signal");
               PDEX();
@@ -169,19 +170,36 @@ void PDEX() {
 //Directly control the movement of the robot based on uart input from the raspberry pi. 
 //Right now, the numbers for x and y needs to be relatively small, since our sensors produce a small number like 0.01, 0.04, etc
 void control_movement() {
-  pos_accel(0.00, 0.01);
-  stop_movement();
-  delay(300);
-  pos_accel(-0.02, 0.00);
-  stop_movement();
-  pos_accel(0.03, -0.03);
+  float originData[3] = {0.00, 0.00, 0.00};
+  //After setting the origin data, checks to make sure we are straight in position and angle!
+  //pos_accel(0.00,0.00);
+  //rotate_gyro(0.00);
+  if (Serial1.available()){
+    char input[50];
+    int bytesRead = Serial1.readBytesUntil('\n', input, sizeof(input) -1);
+    input[bytesRead] = '\0';
+    float x, z, rotation;
+    int parsed = sscanf(input, "%f,%f,%f", &x, &z, &rotation);
+
+  if (parsed == 3){ //Ensure all three values were recieved
+    Serial.print("Received X: ");
+    Serial.println(x);
+    Serial.print("Received Z: ");
+    Serial.println(z);
+    Serial.print("Recieved Rotation: ");
+    Serial.println(rotation);
+  }else{
+    Serial.println("Data parse error!");
+    }
+  }
+  delay(500);
 }
 
 
 //Plan script to navigate to the origins (0,0) of the robot
 void navigate_to_origin() {
     float deltaX = -positionX; // Distance to move back to origin in X
-    float deltaY = -positionY; // Distance to move back to origin in Y
+    float deltaY = -positionZ; // Distance to move back to origin in Y
 
     if (deltaX > 0 && deltaY > 0) {
         move_Diagonal_Top_Right();
@@ -196,62 +214,46 @@ void navigate_to_origin() {
     } else if (deltaX < 0) {
         move_Strafe_Left();
     } else if (deltaY > 0) {
-        move_forward();
+        move_Forward();
     } else if (deltaY < 0) {
-        move_backward();
+        move_Backward();
     }
     
     // Reset position after reaching origin
     positionX = 0;
-    positionY = 0;
+    positionZ = 0;
     stop_movement();
 }
 
 //This script main function is to navigate to a set x and y position given by the raspberry pi via UART (look to the script above)
+//Its in meters, but your numbers will be small, meters
 void pos_accel(float targetDistanceX, float targetDistanceY) {
     float ax, ay, az;
     if (IMU.accelerationAvailable()) {
         IMU.readAcceleration(ax, ay, az);
         ax -= accelDriftX;
-        ay -= accelDriftY;
+        az -= accelDriftZ;
         Serial.println(ax);
-        Serial.println(ay);
+        Serial.println(az);
         if (abs(ax) < ACCEL_NOISE_THRESHOLD) ax = 0;
-        if (abs(ay) < ACCEL_NOISE_THRESHOLD) ay = 0;
+        if (abs(az) < ACCEL_NOISE_THRESHOLD) az = 0;
         velocityX = velocityX * VELOCITY_DAMPING + ax * 0.02;
-        velocityY = velocityY * VELOCITY_DAMPING + ay * 0.02;
+        velocityZ = velocityZ * VELOCITY_DAMPING + az * 0.02;
         Serial.print(velocityX);
-        Serial.print(velocityY);
+        Serial.print(velocityZ);
         positionX += velocityX * 0.02;
-        positionY += velocityY * 0.02;
+        positionZ += velocityZ * 0.02;
         Serial.print("Position: X = ");
-        Serial.print(positionX);
+        Serial.println(positionX);
         //Serial1.println(positionX);
-        Serial.print(" Y = ");
-        Serial.println(positionY);
+        Serial.print(" Z = ");
+        Serial1.println(positionZ);
+        positionalData[0] = positionX;
+        positionalData[1] = positionZ;
         //Serial1.print(positionY);
     }
 }
 
-//Gives the original position of robot for the Raspberry pi to store via UART
-void origin_accel(){
-  float ax, ay, az;
-    if (IMU.accelerationAvailable()) {
-        IMU.readAcceleration(ax, ay, az);
-        ax -= accelDriftX;
-        ay -= accelDriftY;
-        if (abs(ax) < ACCEL_NOISE_THRESHOLD) ax = 0;
-        if (abs(ay) < ACCEL_NOISE_THRESHOLD) ay = 0;
-        velocityX = velocityX * VELOCITY_DAMPING + ax * 0.02;
-        velocityY = velocityY * VELOCITY_DAMPING + ay * 0.02;
-        Serial.println(velocityX);
-        Serial.println(velocityY);
-        positionX = velocityX * 0.02;
-        positionY = velocityY * 0.02;
-        Serial.println(positionX);
-        Serial.println(positionY);
-    }
-}
 
 void rotate_gyro(float targetAngle) {
     float angleRotated = 0;
@@ -294,7 +296,8 @@ void rotate_gyro(float targetAngle) {
 
             // Integrate gyroscope data to estimate angle rotated
             angleRotated += gz * deltaTime;
-            Serial.println(angleRotated);
+            Serial1.println(angleRotated);
+            positionalData[2] = angleRotated;
         }
     }
     stop_movement();  // Stop once the target angle is reached
