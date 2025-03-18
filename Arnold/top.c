@@ -21,8 +21,7 @@ int loaderLower = 2,
 #include <stdbool.h>
 #define UART_PORT "/dev/ttyAMA0"
 #define BAUDRATE B9600
-
-
+#include "move.c"
 //#include "PhotoresistorOperation.C"
 //#include "IR_Avoidance.C"
 //include "AprilTag.C"
@@ -113,7 +112,24 @@ void Inert_State()
 				
             break;
             case 7:
-                printf("~Testing Unit Test~ \n");
+                printf("~Starting Actuators Work Thread (Unit Test)~ \n");
+                // Create a new thread that runs the production actuators_work function.
+                ret = pthread_create(&testThread, NULL, actuators_work, NULL);
+                if (ret != 0) {
+                    fprintf(stderr, "Error creating Actuators Work thread: %d\n", ret);
+                    exit(EXIT_FAILURE);
+                }
+                // Let the actuators_work thread run for a short period (e.g., 5 seconds).
+                sleep(5);
+                // Signal the thread to exit.
+                pthread_mutex_lock(&lock);
+                killswitch = true;
+                pthread_cond_broadcast(&cond);
+                pthread_mutex_unlock(&lock);
+                // Wait for the thread to finish.
+                pthread_join(testThread, NULL);
+                printf("Actuators Work Thread finished.\n");
+            
             break;
             
         default:
@@ -295,23 +311,124 @@ void* MThreadRoutine(void* arg) {
 // Empty stub functions for the original thread names.
 // These can later be implemented with production code.
 // =======================
+// Production Actuators Thread
 void* actuators_work(void* arg) {
-    printf("actuators_work (production) is empty.\n");
+    while (1) {
+        pthread_mutex_lock(&lock);
+        while (currentThread != 1 && !killswitch) {
+            // Actuators thread is waiting for its turn...
+            pthread_cond_wait(&cond, &lock);
+        }
+        if (killswitch) {
+            pthread_mutex_unlock(&lock);
+            break;
+        }
+        
+        // ----- Production Actuators Work Begin -----
+        // TODO: Insert actual actuator control code here.
+        // For example: run_motor_control(), update_actuator_state(), etc.
+        // Example:
+        // run_motor_control();
+        // update_actuator_state();
+        printf("Hello word");
+        // ----- Production Actuators Work End   -----
+        
+        sleep(1);  // Simulated delay (remove when production code is in place).
+        
+        currentThread = nextThread(1);
+        pthread_cond_broadcast(&cond);
+        pthread_mutex_unlock(&lock);
+    }
     return NULL;
 }
 
+// Production Sensors Thread
 void* sensors_work(void* arg) {
-    printf("sensors_work (production) is empty.\n");
+    while (1) {
+        pthread_mutex_lock(&lock);
+        while (currentThread != 2 && !killswitch) {
+            // Sensors thread is waiting for its turn...
+            pthread_cond_wait(&cond, &lock);
+        }
+        if (killswitch) {
+            pthread_mutex_unlock(&lock);
+            break;
+        }
+        
+        // ----- Production Sensors Work Begin -----
+        // TODO: Insert actual sensor reading/processing code here.
+        // For example: read_sensors(), process_sensor_data(), etc.
+        // Example:
+        // read_sensors();
+        // process_sensor_data();
+        // ----- Production Sensors Work End   -----
+        
+        sleep(1);  // Simulated delay (remove when production code is in place).
+        
+        currentThread = nextThread(2);
+        pthread_cond_broadcast(&cond);
+        pthread_mutex_unlock(&lock);
+    }
     return NULL;
 }
 
+// Production Camera Thread
 void* camera_work(void* arg) {
-    printf("camera_work (production) is empty.\n");
+    while (1) {
+        pthread_mutex_lock(&lock);
+        while (currentThread != 3 && !killswitch) {
+            // Camera thread is waiting for its turn...
+            pthread_cond_wait(&cond, &lock);
+        }
+        if (killswitch) {
+            pthread_mutex_unlock(&lock);
+            break;
+        }
+        
+        // ----- Production Camera Work Begin -----
+        // TODO: Insert actual camera capture/processing code here.
+        // For example: capture_image(), process_image(), etc.
+        // Example:
+        // capture_image();
+        // process_image();
+        // ----- Production Camera Work End   -----
+        
+        sleep(1);  // Simulated delay (remove when production code is in place).
+        
+        currentThread = nextThread(3);
+        pthread_cond_broadcast(&cond);
+        pthread_mutex_unlock(&lock);
+    }
     return NULL;
 }
 
-void* data_work(void* arg) {//uart, comminucations
-    printf("data_work (production) is empty.\n");
+// Production Data Thread (e.g., UART communication)
+void* data_work(void* arg) {
+    while (1) {
+        pthread_mutex_lock(&lock);
+        while (currentThread != 4 && !killswitch) {
+            // Data thread is waiting for its turn...
+            pthread_cond_wait(&cond, &lock);
+        }
+        if (killswitch) {
+            pthread_mutex_unlock(&lock);
+            break;
+        }
+        
+        // ----- Production Data Work Begin -----
+        // TODO: Insert actual data communication code here.
+        // For example: read_from_uart(), send_data(), process_received_data(), etc.
+        // Example:
+        // read_from_uart();
+        // process_received_data();
+        // ----- Production Data Work End   -----
+        
+        sleep(1);  // Simulated delay (remove when production code is in place).
+        
+        currentThread = nextThread(4);
+        pthread_cond_broadcast(&cond);
+        pthread_mutex_unlock(&lock);
+    }
     return NULL;
 }
 
