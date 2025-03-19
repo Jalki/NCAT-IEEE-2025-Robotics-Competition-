@@ -62,6 +62,17 @@ unsigned long pulsesA = 0;
 int pwm = 255;
 int sec = 1000; //converts milliseconds to seconds in the delay function.
 
+float currX = 0.0;
+float currZ = 5.0;
+
+float positionX = 0, positionZ = 0, velocityX = 0, velocityZ = 0;
+float accelDriftX = 0, accelDriftZ = 0;
+float gyroDriftZ = 0;
+
+#define ACCEL_NOISE_THRESHOLD 0.02  // Adjust based on testing
+#define VELOCITY_DAMPING 0.98  // Reduces velocity gradually over time
+
+
 //Moves forward
 void move_forward() 
 {
@@ -266,34 +277,97 @@ void stop_movement() {
 
 
 
+void pos_accel(float targetDistanceX, float targetDistanceZ) {
+    float ax, ay, az;
+    float currDirX = ax;
+    float currDirZ = az;
+    if (IMU.accelerationAvailable()) {
+        IMU.readAcceleration(ax, ay, az);
+        ax -= accelDriftX;
+        az -= accelDriftZ;
+        Serial.println(ax);
+        Serial.println(az);
+        if (abs(ax) < ACCEL_NOISE_THRESHOLD) ax = 0;
+        if (abs(az) < ACCEL_NOISE_THRESHOLD) az = 0;
+        velocityX = velocityX * VELOCITY_DAMPING + ax * 0.02;
+        velocityZ = velocityZ * VELOCITY_DAMPING + az * 0.02;
+        Serial.print(velocityX);
+        Serial.print(velocityZ);
+        positionX += velocityX * 0.02;
+        positionZ += velocityZ * 0.02;
+        Serial.print("Position: X = ");
+        Serial.println(positionX);
+        //Serial1.println(positionX);
+        Serial.print(" Z = ");
+        Serial1.println(positionZ);
+        //positionalData[0] = positionX;
+        //positionalData[1] = positionZ;
+        //Serial1.print(positionY);
+        if((targetDistanceX != 0 || targetDistanceZ != 0)){
+          while(( currDirX != targetDistanceX) && (currDirZ != targetDistanceZ)){
+              move_forward();
+        
+          }
+            
+          }
+         else if(targetDistanceX != 0){
+            while( currDirX != targetDistanceX){
+                move_forward();
+        
+              }
+            }
+         else if(targetDistanceZ !=0){
+            while(currDirZ != targetDistanceX){
+                if(currDirZ > targetDistanceX){
+                  move_forward();
+             
+                }
+                else if(currDirZ < targetDistanceX){
+                  move_forward();
+            
+                }
+             }
+          }
+          else{
+            move_forward();
+           
+            } 
+    }
+}
+
+
+
+
+
 void setup(){
   Serial.begin(9600);
 }
 
 void loop(){
+  pos_accel(0.00,0.16);
 //  Test all moving functions 5 second apart
-  move_forward();
-  delay(3000);
-  move_backward();
-  delay(3000);
-  move_Strafe_Right();
-  delay(3000);
-  move_Strafe_Left();
-  delay(3000);
-  move_Diagonal_Top_Right();
-  delay(3000);
-  move_Diagonal_Top_Left();
-  delay(3000);
-  move_Diagonal_Bottom_Right();
-  delay(3000);
-  move_Diagonal_Bottom_Left();
-  delay(3000);
-  move_Rotate_Clockwise();
-  delay(3000);
-  move_Rotate_CounterClockwise();
-  delay(3000);
-  stop_movement();
-  delay(10000);
+//  move_forward();
+//  delay(3000);
+//  move_backward();
+//  delay(3000);
+//  move_Strafe_Right();
+//  delay(3000);
+//  move_Strafe_Left();
+//  delay(3000);
+//  move_Diagonal_Top_Right();
+//  delay(3000);
+//  move_Diagonal_Top_Left();
+//  delay(3000);
+//  move_Diagonal_Bottom_Right();
+//  delay(3000);
+//  move_Diagonal_Bottom_Left();
+//  delay(3000);
+//  move_Rotate_Clockwise();
+//  delay(3000);
+//  move_Rotate_CounterClockwise();
+//  delay(3000);
+//  stop_movement();
+//  delay(10000);
 
 //Test how long to run from start position to the wall across it
 //  Serial.println("I'm moving forward");
@@ -327,6 +401,7 @@ void loop(){
 //  delay(3200);
 //  stop_movement();
 //  delay(10000);
-   
-  
+
+//Sweeping Track with Position
+ 
 }
