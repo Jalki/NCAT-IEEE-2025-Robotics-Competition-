@@ -5,24 +5,62 @@ int ard_sensor_check; //This is to make sure everything goes well with sensors
 #include <Wire.h>
 #include <stdlib.h> 
 
-int D1ENA1pin = 12; // Arduino pin that the motor driver IN1 pin is connected to
-int D1IN1pin = 11; // Arduino pin that the motor driver IN2 pin is connected to
-int D1IN2pin = 10; // Arduino PWM pin that the motor driver ENA pin is connected to 
+//D1N1 & D1N2 = Top Left Wheel
+//D1N3 & D1N4 = Top Right Wheel
+//D2N1 & D2N2 = Bottom Left Wheel
+//D2N3 & D2N4 = Bottom Right Wheel
 
-int D1ENA2pin = 9; // Change to a different PWM pin for D1
-int D1IN3pin = 8; // Arduino pin that the motor driver IN3 pin is connected to
-int D1IN4pin = 7; // Arduino PWM pin that the motor driver ENA pin is connected to 
+//Modification
+//D1N1 & D1N2 = Top Right Wheel
+//D1N3 & D1N4 = Bottom Right Wheel
+//D2N1 & D2N2 = Bottom Left Wheel
+//D2N3 & D2N4 = Top Left Wheel
 
-int D2ENA1pin = 14; // Arduino PWM pin that the motor driver ENA pin is connected to 
-int D2IN1pin = 15; // Arduino pin that the motor driver IN1 pin is connected to
-int D2IN2pin = 16; // Arduino pin that the motor driver IN2 pin is connected to
 
-int D2ENA2pin = 17; // Change to a different PWM pin for D2
-int D2IN3pin = 18; // Arduino pin that the motor driver IN3 pin is connected to
-int D2IN4pin = 19; // Arduino PWM pin that the motor driver ENA pin is connected to 
+/**
+ * D = Driver
+ * IN = Incoder
+ * ENA = Enable(PWM)
+ *
+ *
+ */
+//int D1ENA1pin = 12; // Arduino pin that the motor driver IN1 pin is connected to
+//int D1IN1pin = 11; // Arduino pin that the motor driver IN2 pin is connected to
+//int D1IN2pin = 10; // Arduino PWM pin that the motor driver ENA pin is connected to
+//
+//int D1ENA2pin = 9; // Change to a different PWM pin for D1
+//int D1IN3pin = 8; // Arduino pin that the motor driver IN3 pin is connected to
+//int D1IN4pin = 7; // Arduino PWM pin that the motor driver ENA pin is connected to
+//
+//int D2ENA1pin = 14; // Arduino PWM pin that the moto  r driver ENA pin is connected to
+//int D2IN1pin = 15; // Arduino pin that the motor driver IN1 pin is connected to
+//int D2IN2pin = 16; // Arduino pin that the motor driver IN2 pin is connected to
+//
+//int D2ENA2pin = 17; // Change to a different PWM pin for D2
+//int D2IN3pin = 18; // Arduino pin that the motor driver IN3 pin is connected to
+//int D2IN4pin = 19; // Arduino PWM pin that the motor driver ENA pin is connected to
+
+//Motor1 = Top Left
+//Motor2 = Bottom Right
+//Motor3 = Top Right
+//Motor4 = Bottom Left
+
+int Motor1For = 2;  //switched pin 11 and 10 to 3 and 2
+int Motor1Back = 3;
+int Motor2For = 9;
+int Motor2Back = 8;
+int Motor3For = 7;
+int Motor3Back = 6;
+int Motor4For = 4;// switched pin conection form 4 to 5
+int Motor4Back = 5;
 
 int presentState;
 int previousState;
+
+unsigned long pulsesA = 0;
+
+int pwm = 255;
+int sec = 1000; //converts milliseconds to seconds in the delay function.
 
 const int photoPin = A0; // Analog pin connected to the photoresistor
 int state = 0;          // 0 = calibration, 1 = start LED, 2 = normal state, 3 = cave state
@@ -33,7 +71,7 @@ float pdel[2];          // Array for averages of pde_h and pde_l
 float pdex = 0.00;      // PDE at the current time
 float ptime = 0.00;       // Current time counter
 
-unsigned long pulsesA = 0;
+//unsigned long pulsesA = 0;
 
 float positionX = 0, positionZ = 0, velocityX = 0, velocityZ = 0;
 float accelDriftX = 0, accelDriftZ = 0;
@@ -42,8 +80,8 @@ float gyroDriftZ = 0;
 #define ACCEL_NOISE_THRESHOLD 0.02  // Adjust based on testing
 #define VELOCITY_DAMPING 0.98  // Reduces velocity gradually over time
 
-int pwm = 255;
-int sec = 1000; //converts milliseconds to seconds in the delay function.
+//int pwm = 255;
+//int sec = 1000; //converts milliseconds to seconds in the delay function.
 
 String incomingString = "";
 
@@ -63,23 +101,7 @@ void setup() {
   ard_sensor_check = 1;
   pinMode(photoPin, INPUT_PULLUP); // Set analog pin A0 as input
 
-  // initiate (configure) Arduino pins as outputs
-  pinMode(D1IN1pin, OUTPUT);
-  pinMode(D1IN2pin, OUTPUT);
-  pinMode(D1ENA1pin, OUTPUT);
-  
-  
-  pinMode(D1IN3pin, OUTPUT);
-  pinMode(D1IN4pin, OUTPUT);
-  pinMode(D1ENA2pin, OUTPUT);
-
-  pinMode(D2IN1pin, OUTPUT);
-  pinMode(D2IN2pin, OUTPUT);
-  pinMode(D2ENA1pin, OUTPUT);
-
-  pinMode(D2IN3pin, OUTPUT);
-  pinMode(D2IN4pin, OUTPUT);
-  pinMode(D2ENA2pin, OUTPUT);
+  // initiate (configure) Arduino pins as output
 
   // Initialize last state
   previousState = 0;
@@ -201,23 +223,7 @@ void navigate_to_origin() {
     float deltaX = -positionX; // Distance to move back to origin in X
     float deltaY = -positionZ; // Distance to move back to origin in Y
 
-    if (deltaX > 0 && deltaY > 0) {
-        move_Diagonal_Top_Right();
-    } else if (deltaX < 0 && deltaY > 0) {
-        move_Diagonal_Top_Left();
-    } else if (deltaX < 0 && deltaY < 0) {
-        move_Diagonal_Bottom_Left();
-    } else if (deltaX > 0 && deltaY < 0) {
-        move_Diagonal_Bottom_Right();
-    } else if (deltaX > 0) {
-        move_Strafe_Right();
-    } else if (deltaX < 0) {
-        move_Strafe_Left();
-    } else if (deltaY > 0) {
-        move_Forward();
-    } else if (deltaY < 0) {
-        move_Backward();
-    }
+   
     
     // Reset position after reaching origin
     positionX = 0;
@@ -253,7 +259,6 @@ void pos_accel(float targetDistanceX, float targetDistanceY) {
         //Serial1.print(positionY);
     }
 }
-
 
 void rotate_gyro(float targetAngle) {
     float angleRotated = 0;
@@ -318,203 +323,199 @@ void rotate_360_gyro() {
 }
 
 //Moves forward
-void move_Forward() 
+void move_forward()
 {
-  digitalWrite(D1IN1pin, LOW);
-  digitalWrite(D1IN2pin, HIGH);
-  analogWrite(D1ENA1pin, pwm * 0.50);
+  digitalWrite(Motor1For, HIGH);
+  digitalWrite(Motor1Back, LOW);
+//  analogWrite(D1ENA1pin, pwm * 0.5);
 
-  digitalWrite(D1IN3pin, LOW);
-  digitalWrite(D1IN4pin, HIGH);
-  analogWrite(D1ENA2pin, pwm * 0.50);
-
-  digitalWrite(D2IN1pin, LOW);
-  digitalWrite(D2IN2pin, HIGH);
-  analogWrite(D2ENA1pin, pwm * 0.50);
-
-  digitalWrite(D2IN3pin, LOW);
-  digitalWrite(D2IN4pin, HIGH);
-  analogWrite(D2ENA2pin, pwm * 0.50);
+  digitalWrite(Motor2For, HIGH);// bottom right
+  digitalWrite(Motor2Back, LOW);
+//  analogWrite(D1ENA2pin, pwm * 0.5);
+//
+  digitalWrite(Motor3For, HIGH);//top right
+  digitalWrite(Motor3Back, LOW);
+//  analogWrite(D2ENA1pin, pwm * 0.5);
+//
+  digitalWrite(Motor4For, HIGH);// Bottom left
+  digitalWrite(Motor4Back, LOW);
+//  analogWrite(D2ENA2pin, pwm * 0.5);
 }
 
 //Moves backwards
-void move_Backward() 
+void move_backward()
 {
-  digitalWrite(D1IN1pin, HIGH);
-  digitalWrite(D1IN2pin, LOW);
-  analogWrite(D1ENA1pin, pwm * 0.50);
+  digitalWrite(Motor1For, LOW);
+  digitalWrite(Motor1Back, HIGH);
+  //analogWrite(D1ENA1pin, pwm * 0.50);
 
-  digitalWrite(D1IN3pin, HIGH);
-  digitalWrite(D1IN4pin, LOW);
-  analogWrite(D1ENA2pin, pwm * 0.50);
+  digitalWrite(Motor2For, LOW);
+  digitalWrite(Motor2Back, HIGH);
+  //analogWrite(D1ENA2pin, pwm * 0.50);
 
-  digitalWrite(D2IN1pin, HIGH);
-  digitalWrite(D2IN2pin, LOW);
-  analogWrite(D2ENA1pin, pwm * 0.50);
+  digitalWrite(Motor3For, LOW);
+  digitalWrite(Motor3Back, HIGH);
+  //analogWrite(D2ENA1pin, pwm * 0.50);
 
-  digitalWrite(D2IN3pin, HIGH);
-  digitalWrite(D2IN4pin, LOW);
-  analogWrite(D2ENA2pin, pwm * 0.50);
+  digitalWrite(Motor4For, LOW);
+  digitalWrite(Motor4Back, HIGH);
+  //analogWrite(D2ENA2pin, pwm * 0.50);
 }
 
 //This moves the robot to the right via strafe
-void move_Strafe_Right(){ 
-  digitalWrite(D1IN1pin, LOW);
-  digitalWrite(D1IN2pin, HIGH);
-  analogWrite(D1ENA1pin, pwm * 0.5);
+void move_Strafe_Right(){
+  digitalWrite(Motor1For, HIGH);
+  digitalWrite(Motor1Back, LOW);
+  //analogWrite(D1ENA1pin, pwm * 0.5);
 
-  digitalWrite(D1IN3pin, HIGH);
-  digitalWrite(D1IN4pin, LOW);
-  analogWrite(D1ENA2pin, pwm * 0.5);
+  digitalWrite(Motor2For, HIGH);
+  digitalWrite(Motor2Back, LOW);
+  //analogWrite(D1ENA2pin, pwm * 0.5);
 
-  digitalWrite(D2IN1pin, LOW);
-  digitalWrite(D2IN2pin, HIGH);
-  analogWrite(D2ENA1pin, pwm * 0.5);
+  digitalWrite(Motor3For, LOW);
+  digitalWrite(Motor3Back, HIGH);
+  //analogWrite(D2ENA1pin, pwm * 0.5);
 
-  digitalWrite(D2IN3pin, HIGH);
-  digitalWrite(D2IN4pin, LOW);
-  analogWrite(D2ENA2pin, pwm * 0.5);
+  digitalWrite(Motor4For, LOW);
+  digitalWrite(Motor4Back, HIGH);
+  //analogWrite(D2ENA2pin, pwm * 0.5);
 }
 //This moves the robot to the left via strafe
-void move_Strafe_Left(){ 
-  digitalWrite(D1IN1pin, HIGH);
-  digitalWrite(D1IN2pin, LOW);
-  analogWrite(D1ENA1pin, pwm * 0.50);
+void move_Strafe_Left(){
+  digitalWrite(Motor1For, LOW);
+  digitalWrite(Motor1Back, HIGH);
+  //analogWrite(D1ENA1pin, pwm * 0.50);
 
-  digitalWrite(D1IN3pin, LOW);
-  digitalWrite(D1IN4pin, HIGH);
-  analogWrite(D1ENA2pin, pwm * 0.50);
+  digitalWrite(Motor2For, LOW);
+  digitalWrite(Motor2Back, HIGH);
+  //analogWrite(D1ENA2pin, pwm * 0.50);
 
-  digitalWrite(D2IN1pin, HIGH);
-  digitalWrite(D2IN2pin, LOW);
-  analogWrite(D2ENA1pin, pwm * 0.50);
+  digitalWrite(Motor3For, HIGH);
+  digitalWrite(Motor3Back, LOW);
+  //analogWrite(D2ENA1pin, pwm * 0.50);
 
-  digitalWrite(D2IN3pin, LOW);
-  digitalWrite(D2IN4pin, HIGH);
-  analogWrite(D2ENA2pin, pwm * 0.50);
+  digitalWrite(Motor4For, HIGH);
+  digitalWrite(Motor4Back, LOW);
+  //analogWrite(D2ENA2pin, pwm * 0.50);
 }
 //This moves the robot diagonally top right
 void move_Diagonal_Top_Right(){
-  digitalWrite(D1IN1pin, HIGH);
-  digitalWrite(D1IN2pin, LOW);
-  analogWrite(D1ENA1pin, pwm * 0);
+  digitalWrite(Motor1For, HIGH);
+  digitalWrite(Motor1Back, LOW);
+  //analogWrite(D1ENA1pin, pwm * 0);
 
-  digitalWrite(D1IN3pin, LOW);
-  digitalWrite(D1IN4pin, HIGH);
-  analogWrite(D1ENA2pin, pwm * 0.5);
+  digitalWrite(Motor2For, HIGH);
+  digitalWrite(Motor2Back, LOW);
+  //analogWrite(D1ENA2pin, pwm * 0.5);
 
-  digitalWrite(D2IN1pin, HIGH);
-  digitalWrite(D2IN2pin, LOW);
-  analogWrite(D2ENA1pin, pwm * 0);
+  digitalWrite(Motor3For, LOW);
+  digitalWrite(Motor3Back, LOW);
+  //analogWrite(D2ENA1pin, pwm * 0);
 
-  digitalWrite(D2IN3pin, LOW);
-  digitalWrite(D2IN4pin, HIGH);
-  analogWrite(D2ENA2pin, pwm * 0.5);
+  digitalWrite(Motor4For, LOW);
+  digitalWrite(Motor4Back, LOW);
+  //analogWrite(D2ENA2pin, pwm * 0.5);
 }
 //This moves the robot diagonally top left
-void move_Diagonal_Top_Left(){ 
-  digitalWrite(D1IN1pin, LOW);
-  digitalWrite(D1IN2pin, HIGH);
-  analogWrite(D1ENA1pin, pwm * 0.5);
+void move_Diagonal_Top_Left(){
+  digitalWrite(Motor1For, LOW);
+  digitalWrite(Motor1Back, LOW);
+  //analogWrite(D1ENA1pin, pwm * 0.5);
 
-  digitalWrite(D1IN3pin, HIGH);
-  digitalWrite(D1IN4pin, LOW);
-  analogWrite(D1ENA2pin, pwm * 0);
+  digitalWrite(Motor2For, LOW);
+  digitalWrite(Motor2Back, LOW);
+  //analogWrite(D1ENA2pin, pwm * 0);
 
-  digitalWrite(D2IN1pin, LOW);
-  digitalWrite(D2IN2pin, HIGH);
-  analogWrite(D2ENA1pin, pwm * 0.5);
+  digitalWrite(Motor3For, HIGH);
+  digitalWrite(Motor3Back, LOW);
+  //analogWrite(D2ENA1pin, pwm * 0.5);
 
-  digitalWrite(D2IN3pin, LOW);
-  digitalWrite(D2IN4pin, HIGH);
-  analogWrite(D2ENA2pin, pwm * 0);
+  digitalWrite(Motor4For, HIGH);
+  digitalWrite(Motor4Back, LOW);
+  //analogWrite(D2ENA2pin, pwm * 0);
 }
 //This moves the robot diagonally bottom left
-void move_Diagonal_Bottom_Left(){ 
-  digitalWrite(D1IN1pin, HIGH);
-  digitalWrite(D1IN2pin, LOW);
-  analogWrite(D1ENA1pin, pwm * 0.5);
+void move_Diagonal_Bottom_Left(){
+  digitalWrite(Motor1For, LOW);
+  digitalWrite(Motor1Back, LOW);
+  //analogWrite(D1ENA1pin, pwm * 0.5);
 
-  digitalWrite(D1IN3pin, HIGH);
-  digitalWrite(D1IN4pin, LOW);
-  analogWrite(D1ENA2pin, pwm * 0);
+  digitalWrite(Motor2For, LOW);
+  digitalWrite(Motor2Back, LOW);
+  //analogWrite(D1ENA2pin, pwm * 0);
 
-  digitalWrite(D2IN1pin, HIGH);
-  digitalWrite(D2IN2pin, LOW);
-  analogWrite(D2ENA1pin, pwm * 0.5);
+  digitalWrite(Motor3For, LOW);
+  digitalWrite(Motor3Back, HIGH);
+  //analogWrite(D2ENA1pin, pwm * 0.5);
 
-  digitalWrite(D2IN3pin, LOW);
-  digitalWrite(D2IN4pin, HIGH);
-  analogWrite(D2ENA2pin, pwm * 0);
-  
+  digitalWrite(Motor4For, LOW);
+  digitalWrite(Motor4Back, HIGH);
+  //analogWrite(D2ENA2pin, pwm * 0);
+ 
 }
 //This moves the robot diagonally bottom right
-void move_Diagonal_Bottom_Right(){ 
-  digitalWrite(D1IN1pin, HIGH);
-  digitalWrite(D1IN2pin, LOW);
-  analogWrite(D1ENA1pin, pwm * 0);
+void move_Diagonal_Bottom_Right(){
+  digitalWrite(Motor1For, LOW);
+  digitalWrite(Motor1Back, HIGH);
+  //analogWrite(D1ENA1pin, pwm * 0);
 
-  digitalWrite(D1IN3pin, HIGH);
-  digitalWrite(D1IN4pin, LOW);
-  analogWrite(D1ENA2pin, pwm * 0.5);
+  digitalWrite(Motor2For, LOW);
+  digitalWrite(Motor2Back, HIGH);
+  //analogWrite(D1ENA2pin, pwm * 0.5);
 
-  digitalWrite(D2IN1pin, HIGH);
-  digitalWrite(D2IN2pin, LOW);
-  analogWrite(D2ENA1pin, pwm * 0);
+  digitalWrite(Motor3For, LOW);
+  digitalWrite(Motor3Back, LOW);
+  //analogWrite(D2ENA1pin, pwm * 0);
 
-  digitalWrite(D2IN3pin, HIGH);
-  digitalWrite(D2IN4pin, LOW);
-  analogWrite(D2ENA2pin, pwm * 0.5);
+  digitalWrite(Motor4For, LOW);
+  digitalWrite(Motor4Back, LOW);
+  //analogWrite(D2ENA2pin, pwm * 0.5);
 }
 //Moves Clockwise
 void move_Rotate_Clockwise(){
-  digitalWrite(D1IN1pin, HIGH);
-  digitalWrite(D1IN2pin, LOW);
-  analogWrite(D1ENA1pin, pwm * 0.50);
+  digitalWrite(Motor1For, HIGH);
+  digitalWrite(Motor1Back, LOW);
+  //analogWrite(D1ENA1pin, pwm * 0.50);
 
-  digitalWrite(D1IN3pin, HIGH);
-  digitalWrite(D1IN4pin, LOW);
-  analogWrite(D1ENA2pin, pwm * 0.50);
+  digitalWrite(Motor2For, LOW);
+  digitalWrite(Motor2Back, HIGH);
+  //analogWrite(D1ENA2pin, pwm * 0.50);
 
-  digitalWrite(D2IN1pin, LOW);
-  digitalWrite(D2IN2pin, HIGH);
-  analogWrite(D2ENA1pin, pwm * 0.50);
+  digitalWrite(Motor3For, LOW);
+  digitalWrite(Motor3Back, HIGH);
+  //analogWrite(D2ENA1pin, pwm * 0.50);
 
-  digitalWrite(D2IN3pin, LOW);
-  digitalWrite(D2IN4pin, HIGH);
-  analogWrite(D2ENA2pin, pwm * 0.50);
+  digitalWrite(Motor4For, HIGH);
+  digitalWrite(Motor4Back, LOW);
+  //analogWrite(D2ENA2pin, pwm * 0.50);
 }
 //Moves Counter Clockwise
 void move_Rotate_CounterClockwise(){  
-  digitalWrite(D1IN1pin, LOW);
-  digitalWrite(D1IN2pin, HIGH);
-  analogWrite(D1ENA1pin, pwm * 0.50);
+  digitalWrite(Motor1For, LOW);
+  digitalWrite(Motor1Back, HIGH);
+  
 
-  digitalWrite(D1IN3pin, LOW);
-  digitalWrite(D1IN4pin, HIGH);
-  analogWrite(D1ENA2pin, pwm * 0.50);
+  digitalWrite(Motor2For, HIGH);
+  digitalWrite(Motor2Back, LOW);
+  
 
-  digitalWrite(D2IN1pin, HIGH);
-  digitalWrite(D2IN2pin, LOW);
-  analogWrite(D2ENA1pin, pwm * 0.50);
+  digitalWrite(Motor3For, HIGH);
+  digitalWrite(Motor3Back, LOW);
+  
 
-  digitalWrite(D2IN3pin, HIGH);
-  digitalWrite(D2IN4pin, LOW);
-  analogWrite(D2ENA2pin, pwm * 0.50);
+  digitalWrite(Motor4For, LOW);
+  digitalWrite(Motor4Back, HIGH);
+
 }
 
 // Function to stop all motors
 void stop_movement() {
-  digitalWrite(D1IN1pin, LOW);
-  digitalWrite(D1IN2pin, LOW);
-  digitalWrite(D1IN3pin, LOW);
-  digitalWrite(D1IN4pin, LOW);
-  digitalWrite(D2IN1pin, LOW);
-  digitalWrite(D2IN2pin, LOW);
-  digitalWrite(D2IN3pin, LOW);
-  digitalWrite(D2IN4pin, LOW);
-  analogWrite(D1ENA1pin, 0);
-  analogWrite(D1ENA2pin, 0);
-  analogWrite(D2ENA1pin, 0);
-  analogWrite(D2ENA2pin, 0);
+  digitalWrite(Motor1For, LOW);
+  digitalWrite(Motor1Back, LOW);
+  digitalWrite(Motor2For, LOW);
+  digitalWrite(Motor2Back, LOW);
+  digitalWrite(Motor3For, LOW);
+  digitalWrite(Motor3Back, LOW);
+  digitalWrite(Motor4For, LOW);
+  digitalWrite(Motor4Back, LOW);
 }
