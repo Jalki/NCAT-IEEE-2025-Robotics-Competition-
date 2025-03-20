@@ -5,6 +5,8 @@ int ard_sensor_check; //This is to make sure everything goes well with sensors
 #include <Wire.h>
 #include <stdlib.h> 
 
+#include <math.h>
+
 //D1N1 & D1N2 = Top Left Wheel
 //D1N3 & D1N4 = Top Right Wheel
 //D2N1 & D2N2 = Bottom Left Wheel
@@ -73,9 +75,9 @@ float ptime = 0.00;       // Current time counter
 
 //unsigned long pulsesA = 0;
 
-float positionX = 0, positionZ = 0, velocityX = 0, velocityZ = 0;
-float accelDriftX = 0, accelDriftZ = 0;
-float gyroDriftZ = 0;
+float positionX = 0, positionZ = 0, velocityX = 0, velocityZ = 0; //Variables to hold the data for the position of the arduino
+float accelDriftX = 0, accelDriftZ = 0; // Variables to hold the drift of the accel
+float gyroDriftZ = 0; //Variables to hold the drift of the gryoscope
 
 #define ACCEL_NOISE_THRESHOLD 0.02  // Adjust based on testing
 #define VELOCITY_DAMPING 0.98  // Reduces velocity gradually over time
@@ -86,6 +88,51 @@ float gyroDriftZ = 0;
 String incomingString = "";
 
 float positionalData[3] = {0.00, 0.00, 0.00};
+
+// Kalman filter variables
+double angle = 0.0; // The angle calculated by the Kalman filter
+float rate = 0.0; // Gyro rate
+float bias = 0.0; // Gyro bias
+float P[2][2] = {{1, 0}, {0, 1}};
+float Q_angle = 0.001; // Process noise variance for the accelerometer
+float Q_bias = 0.003;  // Process noise variance for the gyro bias
+float R_measure = 0.03; // Measurement noise variance
+
+// Time tracking
+unsigned long lastTime = 0;
+float dt = 0.01; // Loop time step
+
+// Kalman filter function
+double kalmanFilter(double newAngle, double newRate) {
+    float S;
+    float K[2];
+    float y;
+
+    // Predict
+    rate = newRate - bias;
+    angle += dt * rate;
+
+    P[0][0] += dt * (dt * P[1][1] - P[0][1] - P[1][0] + Q_angle);
+    P[0][1] -= dt * P[1][1];
+    P[1][0] -= dt * P[1][1];
+    P[1][1] += Q_bias * dt;
+
+    // Update
+    S = P[0][0] + R_measure;
+    K[0] = P[0][0] / S;
+    K[1] = P[1][0] / S;
+
+    y = newAngle - angle;
+    angle += K[0] * y;
+    bias += K[1] * y;
+
+    P[0][0] -= K[0] * P[0][0];
+    P[0][1] -= K[0] * P[0][1];
+    P[1][0] -= K[1] * P[0][0];
+    P[1][1] -= K[1] * P[0][1];
+
+    return angle;
+}
 
 void setup() {
   Serial.begin(9600);
@@ -210,6 +257,8 @@ void control_movement() {
     Serial.println(z);
     Serial.print("Recieved Rotation: ");
     Serial.println(rotation);
+    pos_accel(x,z);
+    rotate_gyro(rotation);
   }else{
     Serial.println("Data parse error!");
     }
@@ -231,10 +280,11 @@ void navigate_to_origin() {
     stop_movement();
 }
 
-//This script main function is to navigate to a set x and y position given by the raspberry pi via UART (look to the script above)
+//This script main function is to navigate to a set x and z position given by the raspberry pi via UART (look to the script above)
 //Its in meters, but your numbers will be small, meters
-void pos_accel(float targetDistanceX, float targetDistanceY) {
+void pos_accel(float targetDistanceX, float targetDistanceZ) {
     float ax, ay, az;
+    float dpos_x, dpos_z;
     if (IMU.accelerationAvailable()) {
         IMU.readAcceleration(ax, ay, az);
         ax -= accelDriftX;
@@ -257,6 +307,21 @@ void pos_accel(float targetDistanceX, float targetDistanceY) {
         positionalData[0] = positionX;
         positionalData[1] = positionZ;
         //Serial1.print(positionY);
+        if((positionX != targetDistanceX) && (positionZ != targetDistanceZ)){
+          angle = double atan(targetDistanceZ/targetDistanceX);
+          // Compute time elapsed
+          unsigned long currentTime = millis();
+          float deltaTime = (currentTime - prevTime) / 1000.00; // Convert ms to seconds
+          prevTime = currentTime;
+          //Only to use it for the d 
+        }
+        else if(positionX != targetDistanceX){
+
+        }else if(positionZ != targetDistanceZ){
+
+        }else{
+          stop_movement();
+        }
     }
 }
 
