@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <time.h>
 #include <string.h>
-#include <unistd.h>
 #include <math.h>  // for fabs()
 
 //As a reminder, the partial viewpoint print function visualizes already if a robot is
@@ -36,16 +35,24 @@
 
 // Robot "footprint" dimensions: 12×12 cells (half-size is 6 cells)
 #define ROBOT_HALF_SIZE 12
-
+#define CAVE_ENTRY_YAXIS 45//this is relative to the playable area, not the entire board with borders
 // Rotation clearance: require a 15" square clearance around the robot.
 // Since each cell is 0.5", 15" equals 30 cells, so half-size is 15 cells.
 #define ROTATION_CLEARANCE_CELLS 18
 #define PO(x) ((x) + BORDER_CELLS)
-int lastGoodCoord[2];
+
+typedef struct {
+    int row;
+    int col;
+    char dir;
+} RobotState;
+
+
 
 // ----- Global Variables -----
 // Grid stores the field (each cell is a character).
 // 'B' marks borders, '0' marks accessible cells, and 'C' marks the robot's center.
+int lastGoodCoord[2];
 char grid[EFFECTIVE_HEIGHT_CELLS][EFFECTIVE_WIDTH_CELLS];
 int robot_row, robot_col, Nboxrow, Nboxcol, Gboxrow, Gboxcol;  // current position (grid indices) of the robot's center
 char robot_dir = 'N';      // global robot facing direction (N, E, S, or W)
@@ -54,12 +61,18 @@ char lastevictedelement = '0';// this must be guaranteed or this wont work prope
 // ----- Function Prototypes -----
 // Note: underscores have been removed from function names in both declarations and comments.
 //top level user functions
-void moverobotdirection(char rel_dir, double distance_in);  // moves robot in one of four directions
+
 void rotaterobot(int angle);          // rotates robot by a multiple of 90 degrees=
 void reconcile(double front_cm, double left_cm, double right_cm);
 void initalizemovement(void);
+int moverobotxy(double target_x, double target_y);//NEW: By popular demand, this was made
+//Note: this is NOT a minmax algorithm since there are only 2 cases
+void printboxconflicts(void);//Best for viewing wall/box conflicts
+int alignYcave(void);
+
 
 //helper functioins
+int moverobotdirection(char rel_dir, double distance_in);  // moves robot in one of four directions
 void initializegrid(void);
 void placerobotrandom(void);
 int canmove(int new_row, int new_col, int *lastrow, int *lastcol);
@@ -71,7 +84,150 @@ void setrobotposition(int new_row, int new_col); // relocates robot without clea
 void initregions(void);
 int canmoveto(double delta_row_in, double delta_col_in);
 int canmovetorecursive(int cur_row, int cur_col, int dest_row, int dest_col);
+RobotState getRobotState(void) ;
+void restoreRobotState(RobotState state);
+void runEdgeCaseTests(void);
 
+
+int main(void) {
+    srand(time(NULL));  // Seed the random number generator
+
+    // Initialize grid and regions.
+    initalizemovement();
+	runEdgeCaseTests();
+    // --- Test moverobotdirection and then perform a rotation test after each move ---
+    
+    // Test 1: Move up extent.
+    // For a robot facing North, a forward ('F') movement of 32 inches should move it upward.
+   // printf("\nTest 1: Move up extent...\n");
+	//moverobotxy(-5,35);
+	//printsurroundingrows();
+	//rotaterobot(360);
+   /* moverobotdirection('F',3+ 3);
+    printf("\nRotation Test 1: Rotating robot 90 degrees...\n");
+    rotaterobot(90);
+    printentiregrid();
+
+    // Test 2: Move down extent.
+    // For a robot facing (after rotation) the appropriate direction, use 'B' for backward.
+    printf("\nTest 2: Move down extent...\n");
+    moverobotdirection('B', 2.0);
+    printf("\nRotation Test 2: Rotating robot -90 degrees...\n");
+    rotaterobot(-90);
+    printentiregrid();
+
+    // Test 3: Move right extent.
+    printf("\nTest 3: Move right extent...\n");
+    moverobotdirection('R', 10.5);
+    printf("\nRotation Test 3: Rotating robot 180 degrees...\n");
+    rotaterobot(180);
+    printentiregrid();
+
+    // Test 4: Move left extent.
+    printf("\nTest 4: Move left extent...\n");
+    moverobotdirection('L', 25.0);
+    printf("\nRotation Test 4: Rotating robot 90 degrees...\n");
+    rotaterobot(90);
+    printentiregrid();
+
+    // Test 5: Error test - invalid relative direction.
+    printf("\nTest 5: Error test: calling moverobotdirection('X', 1.0)...\n");
+    moverobotdirection('X', 1.0);
+*/
+    return 0;
+}
+
+
+// Example snippet demonstrating various navigation tests using moverobotxy()
+// Each call attempts to move the robot’s center to an absolute (x,y) in inches
+// relative to the playable area (0,0 in the top-left).
+// Ensure that moverobotxy() and any needed global variables are already defined.
+
+void runEdgeCaseTests(void) {
+    // 1. Start: place the robot at some known location, e.g. near the top-left corner
+    //    or the center of the field. For example:
+    moverobotdirection('B', 0.5);
+    moverobotxy(6,12);  // ~12 inches in from top-left
+
+    printf("\n[TEST] Robot placed near top-left corner, facing north.\n");
+
+    if (!alignYcave()) {
+        printf("[ERROR] Could not align to cave.\n");
+    }
+
+    // 2. Move to the “cave” area on the right side. Suppose the cave entrance is near x=80, y=20.
+    //    (Adjust these coordinates to match your actual field.)
+    printf("\n[TEST] Moving into the cave on the right side.\n");
+    if (!moverobotxy(68,6)) {
+        printf("[ERROR] Could not navigate to (80,20) in the cave entrance.\n");
+    }
+
+    // 3. Move deeper into the cave, say near x=85, y=35. (Hypothetical corridor.)
+    //    The code tries “x-then-y” and “y-then-x” paths automatically.
+    printf("\n[TEST] Going deeper into the cave.\n");
+    if (!moverobotxy(68,38.5)) {
+        printf("[ERROR] Could not navigate deeper inside the cave at (85,35).\n");
+    }
+
+    // 4. Exit the cave to an open region, say x=60, y=30. (Back out or around the corridor.)
+    printf("\n[TEST] Exiting the cave to open field.\n");
+    if (!moverobotxy(87,6)) {
+        printf("[ERROR] Could not navigate back out to (60,30).\n");//PASS MARK
+    }
+
+    // 5. Test corners: top-left corner is (0,0).
+    //    Because we’re referencing playable area coordinates, that’s just (0,0).
+    printf("\n[TEST] Navigating to top-left playable corner (0,0).\n");
+    if (!moverobotxy(87,38.5)) {
+        printf("[ERROR] Could not reach top-left corner.\n");//PASS
+    }
+
+    // 6. Next, top-right corner is (93,0).
+    printf("\n[TEST] Navigating to top-right playable corner (93,0).\n");
+    if (!moverobotxy(93.0, 0.0)) {
+        printf("[ERROR] Could not reach top-right corner.\n");//PASS
+    }
+
+    // 7. Bottom-right corner is (93,45).
+    printf("\n[TEST] Navigating to bottom-right playable corner (93,45).\n");
+    if (!moverobotxy(93.0, 45.0)) {
+        printf("[ERROR] Could not reach bottom-right corner.\n");
+    }
+
+    // 8. Bottom-left corner is (0,45).
+    printf("\n[TEST] Y-Aligning and finishing test.\n");
+    alignYcave();
+    printf("\n[TEST] RIGHTMOST TEST\n");
+    if (!moverobotxy(86.5,22.5)) {//maxed right side
+        printf("[ERROR] Could rightmost cave..\n");//PASS
+    }
+
+    printf("\n[TEST] LOWER STUD TEST\n");
+    if (!moverobotxy(86.5,37)) {
+        printf("[ERROR] Could not pass lower studs.\n");//PASS
+    }
+
+    printf("\n[TEST] UPPER STUD TEST\n");
+    if (!moverobotxy(86.5,7.5)) {
+        printf("[ERROR] Could not pass upper studs.\n");//PASS
+    }
+
+    printf("\n[TEST] HOME TEST\n");
+    if (!moverobotxy(38.5,31)) {
+        printf("[ERROR] Could not go home\n");//PASS
+    }
+
+    printf("y aligning...");
+    alignYcave();
+
+    printf("testing outside upper side by left of cave...");
+    if (!moverobotxy(38.5,31)) {
+        printf("[ERROR] Could not go home\n");//PASS
+    }
+
+
+    printf("\n[TEST] Finished edge-case tests.\n");
+}
 
 void initalizemovement(void){
     initializegrid();
@@ -83,58 +239,6 @@ void initalizemovement(void){
     
     
 }
-int main(void) {
-    srand(time(NULL));  // Seed the random number generator
-
-    // Initialize grid and regions.
-    initalizemovement();
-
-
-    // --- Test moverobotdirection and then perform a rotation test after each move ---
-    
-    // Test 1: Move up extent.
-    // For a robot facing North, a forward ('F') movement of 32 inches should move it upward.
-    printf("\nTest 1: Move up extent: calling moverobotdirection('F', 32.0)...\n");
-    moverobotdirection('F',3+ 3);
-    printsurroundingrows();
-    printf("\nRotation Test 1: Rotating robot 90 degrees...\n");
-    rotaterobot(90);
-    printsurroundingrows();
-
-    // Test 2: Move down extent.
-    // For a robot facing (after rotation) the appropriate direction, use 'B' for backward.
-    printf("\nTest 2: Move down extent: calling moverobotdirection('B', 2.0)...\n");
-    moverobotdirection('B', 2.0);
-    printsurroundingrows();
-    printf("\nRotation Test 2: Rotating robot -90 degrees...\n");
-    rotaterobot(-90);
-    printsurroundingrows();
-
-    // Test 3: Move right extent.
-    printf("\nTest 3: Move right extent: calling moverobotdirection('R', 10.5)...\n");
-    moverobotdirection('R', 10.5);
-    printsurroundingrows();
-    printf("\nRotation Test 3: Rotating robot 180 degrees...\n");
-    rotaterobot(180);
-    printsurroundingrows();
-
-    // Test 4: Move left extent.
-    printf("\nTest 4: Move left extent: calling moverobotdirection('L', 25.0)...\n");
-    moverobotdirection('L', 25.0);
-    printsurroundingrows();
-    printf("\nRotation Test 4: Rotating robot 90 degrees...\n");
-    rotaterobot(90);
-    printsurroundingrows();
-
-    // Test 5: Error test - invalid relative direction.
-    printf("\nTest 5: Error test: calling moverobotdirection('X', 1.0)...\n");
-    moverobotdirection('X', 1.0);
-
-    return 0;
-}
-
-
-
 
 // ----- New Rotation Function -----
 // Rotates the robot by an angle (in degrees, multiple of 90, can be negative).
@@ -149,6 +253,7 @@ void rotaterobot(int angle) {
     }
     // Check if there is enough clearance for rotation.
     if (!canrotate()) {
+        printboxconflicts();
         printf("Rotation blocked: not enough clearance for a 15\" square around the robot.\n");
         return;
     }
@@ -196,28 +301,188 @@ int canrotate(void) {
     int end_col = robot_col + ROTATION_CLEARANCE_CELLS;
 
     debugrotateconditions(start_row, end_row, start_col, end_col);
+
     // Ensure the region is within the playable boundaries.
     if (start_row < PLAYABLE_TOP || end_row > PLAYABLE_BOTTOM ||
-        start_col < PLAYABLE_LEFT || end_col > PLAYABLE_RIGHT)
+        start_col < PLAYABLE_LEFT || end_col > PLAYABLE_RIGHT) {
+        printf("DEBUG: Region for rotation is out of playable boundaries.\n");
         return 0;
+    }
 
+    // Check that every cell in the region is allowed.
     for (int i = start_row; i <= end_row; i++) {
         for (int j = start_col; j <= end_col; j++) {
-            if (grid[i][j] != '0' && grid[i][j] != 'C' && grid[i][j] != '1' && grid[i][j] != '2' && grid[i][j] != '3' && grid[i][j] != '4' && grid[i][j] != 'T')
+            if (grid[i][j] != '0' && grid[i][j] != 'C' &&
+                grid[i][j] != '1' && grid[i][j] != '2' &&
+                grid[i][j] != '3' && grid[i][j] != '4' &&
+                grid[i][j] != 'T' && grid[i][j] != 'G' && grid[i][j] != 'N') {//theoretically boxes shouldnt be detected first
+                printf("DEBUG: canrotate() found invalid cell at (%d, %d): '%c'\n", i, j, grid[i][j]);
                 return 0;
+            } else {
+               // printf("DEBUG: canrotate() valid cell at (%d, %d): '%c'\n", i, j, grid[i][j]);
+            }
         }
     }
-	//for boxes
-	    for (int i = start_row-6; i <= end_row+6; i++) {
-        for (int j = start_col-6; j <= end_col+6; j++) {
-            if (grid[i][j] == 'G' || grid[i][j] == 'N')
+
+    //CLAMPING: For reasons discovered from moving along the edge of the map
+    int min_row_box = start_row - 6;
+    int max_row_box = end_row + 6;
+    int min_col_box = start_col - 6;
+    int max_col_box = end_col + 6;
+
+    // Clamp the extended region to the entire field dimensions (i.e. the full grid)
+    if (min_row_box < 0)                    min_row_box = 0;
+    if (max_row_box > EFFECTIVE_HEIGHT_CELLS - 1)  max_row_box = EFFECTIVE_HEIGHT_CELLS - 1;
+    if (min_col_box < 0)                    min_col_box = 0;
+    if (max_col_box > EFFECTIVE_WIDTH_CELLS - 1)   max_col_box = EFFECTIVE_WIDTH_CELLS - 1;
+
+    // For box check: if any cell in an extended region is marked 'G' or 'N', return 0.
+    for (int i = min_row_box; i <= max_row_box; i++) {
+        for (int j = min_col_box; j <= max_col_box; j++) {\
+            if (grid[i][j] == 'G' || grid[i][j] == 'N') {
+                printf("DEBUG: canrotate() found box at (%d, %d): '%c'\n", i, j, grid[i][j]);
                 return 0;
+            } else {
+               // printf("DEBUG: canrotate() box-check valid cell at (%d, %d): '%c'\n", i, j, grid[i][j]);
+            }
         }
     }
-	
-	
+    
+   // printf("DEBUG: canrotate() - Region is clear for rotation.\n");
     return 1;
 }
+
+
+RobotState getRobotState(void) {
+    RobotState state;
+    state.row = robot_row;
+    state.col = robot_col;
+    state.dir = robot_dir;
+    return state;
+}
+
+void restoreRobotState(RobotState state) {
+    setrobotposition(state.row, state.col);
+    robot_dir = state.dir;
+}
+
+// moverobotxy: Moves the robot to an absolute target (x,y) given in inches relative to the playable area
+// (with (0,0) as the upper-left corner). It attempts two orders of movement (x then y, or y then x)
+// using moverobotdirection, and returns 1 on success, 0 on failure.
+int moverobotxy(double target_x, double target_y) {//todo: track successful deltas [nothing if none] to send to the arduino
+    // Convert target coordinates (inches relative to playable area) to grid coordinates.
+    int target_col = (int) round(target_x * CELLS_PER_INCH) + BORDER_CELLS;
+    int target_row = (int) round(target_y * CELLS_PER_INCH) + BORDER_CELLS;
+
+    // Compute current position in inches relative to playable area.
+    double current_x = (robot_col - BORDER_CELLS) / (double)CELLS_PER_INCH;
+    double current_y = (robot_row - BORDER_CELLS) / (double)CELLS_PER_INCH;
+
+    double dx = target_x - current_x; // horizontal difference in inches
+    double dy = target_y - current_y; // vertical difference in inches
+
+    printf("moverobotxy: Target (inches): (%.2f, %.2f), Current (inches): (%.2f, %.2f), dx = %.2f, dy = %.2f\n",
+           target_x, target_y, current_x, current_y, dx, dy);
+
+    // Save original robot state.
+    RobotState orig = getRobotState();
+    int success = 0;
+
+    // Order 1: Move horizontally (x) then vertically (y).
+    printf("moverobotxy: Trying order 1 (x then y)...\n");
+    if (dx != 0.0) {
+        char rel_x;
+        if (robot_dir == 'N')
+            rel_x = (dx > 0) ? 'R' : 'L';
+        else if (robot_dir == 'S')
+            rel_x = (dx > 0) ? 'L' : 'R';
+        else if (robot_dir == 'E')
+            rel_x = (dx > 0) ? 'F' : 'B';
+        else if (robot_dir == 'W')
+            rel_x = (dx > 0) ? 'B' : 'F';
+        else
+            rel_x = 'F';
+        if (!moverobotdirection(rel_x, (dx > 0) ? dx : -dx)) {
+            //printf("moverobotxy: Order 1 failed during horizontal move.\n");
+            restoreRobotState(orig);//possibly redundant
+            goto try_order2;
+        }
+    }
+    if (dy != 0.0) {
+        char rel_y;
+        if (robot_dir == 'N')
+            rel_y = (dy < 0) ? 'F' : 'B';
+        else if (robot_dir == 'S')
+            rel_y = (dy < 0) ? 'B' : 'F';
+        else if (robot_dir == 'E')
+            rel_y = (dy < 0) ? 'L' : 'R';
+        else if (robot_dir == 'W')
+            rel_y = (dy < 0) ? 'R' : 'L';
+        else
+            rel_y = 'F';
+        if (!moverobotdirection(rel_y, (dy > 0) ? dy : -dy)) {
+            //printf("moverobotxy: Order 1 failed during vertical move.\n");
+           restoreRobotState(orig); //possibly redundant
+            goto try_order2;
+        }
+    }
+    success = 1;
+    goto finish;
+
+try_order2:
+    // Order 2: Move vertically then horizontally.
+    printf("moverobotxy: Trying order 2 (y then x)...\n");
+    restoreRobotState(orig);
+    if (dy != 0.0) {
+        char rel_y;
+        if (robot_dir == 'N')
+            rel_y = (dy < 0) ? 'F' : 'B';
+        else if (robot_dir == 'S')
+            rel_y = (dy < 0) ? 'B' : 'F';
+        else if (robot_dir == 'E')
+            rel_y = (dy < 0) ? 'L' : 'R';
+        else if (robot_dir == 'W')
+            rel_y = (dy < 0) ? 'R' : 'L';
+        else
+            rel_y = 'F';
+        if (!moverobotdirection(rel_y, (dy > 0) ? dy : -dy)) {
+            //printf("moverobotxy: Order 2 failed during vertical move.\n");
+            success = 0;
+            goto finish;
+        }
+    }
+    if (dx != 0.0) {
+        char rel_x;
+        if (robot_dir == 'N')
+            rel_x = (dx > 0) ? 'R' : 'L';
+        else if (robot_dir == 'S')
+            rel_x = (dx > 0) ? 'L' : 'R';
+        else if (robot_dir == 'E')
+            rel_x = (dx > 0) ? 'F' : 'B';
+        else if (robot_dir == 'W')
+            rel_x = (dx > 0) ? 'B' : 'F';
+        else
+            rel_x = 'F';
+        if (!moverobotdirection(rel_x, (dx > 0) ? dx : -dx)) {
+            //printf("moverobotxy: Order 2 failed during horizontal move.\n");
+            success = 0;
+            goto finish;
+        }
+    }
+    success = 1;
+
+finish:
+    if (success) {
+        printf("moverobotxy: Successfully moved to target playable inches (%.2f, %.2f) corresponding to grid (%d, %d).\n",
+               target_x, target_y, target_row-BORDER_CELLS, target_col-BORDER_CELLS);
+        return 1;
+    } else {
+        printf("moverobotxy: Could not find a valid path to the target.\n");
+        restoreRobotState(orig);
+        return 0;
+    }
+}
+
 
 // ----- New Movement Function -----
 // Moves the robot one cell in the given direction:
@@ -225,7 +490,8 @@ int canrotate(void) {
 // It checks that a 12x12 region around the candidate new center is free.
 // If allowed, the robot's current position is cleared and updated.
 // Note: The global facing direction (robot_dir) is NOT updated here.
-void moverobotdirection(char rel_dir, double distance_in) {
+
+int moverobotdirection(char rel_dir, double distance_in) {
     double delta_row_in = 0.0;
     double delta_col_in = 0.0;
 
@@ -273,7 +539,7 @@ void moverobotdirection(char rel_dir, double distance_in) {
             break;
         default:
             printf("Invalid relative direction: %c\n", rel_dir);
-            return;
+            return 0;
     }
 
     // Use canmoveto (which expects delta values in inches) to check the path.
@@ -286,9 +552,11 @@ void moverobotdirection(char rel_dir, double distance_in) {
         setrobotposition(new_row, new_col);
         printf("Moved robot relative '%c' by %.2f inches to (%d, %d). Facing remains: %c\n",
                rel_dir, distance_in, robot_row, robot_col, robot_dir);
+		return 1;
     } else {
         printf("Cannot move robot relative '%c' by %.2f inches from (%d, %d) - blocked or out of bounds.\n",
                rel_dir, distance_in, robot_row, robot_col);
+		return 0;
     }
 }
 
@@ -304,9 +572,9 @@ int canmove(int new_row, int new_col, int *lastrow, int *lastcol) {
     int end_col = new_col + ROBOT_HALF_SIZE;
 
     // Debug prints: show the candidate position and the computed footprint boundaries.
-    printf("DEBUG: canmove() candidate: new_row = %d, new_col = %d\n", new_row, new_col);
-    printf("DEBUG: Footprint boundaries: start_row = %d, end_row = %d, start_col = %d, end_col = %d\n",
-           start_row, end_row, start_col, end_col);
+  //  printf("DEBUG: canmove() candidate: new_row = %d, new_col = %d\n", new_row, new_col);
+   // printf("DEBUG: Footprint boundaries: start_row = %d, end_row = %d, start_col = %d, end_col = %d\n",
+        //   start_row, end_row, start_col, end_col);
 
     // Ensure the footprint stays within the playable boundaries.
     if (start_row < PLAYABLE_TOP || end_row > PLAYABLE_BOTTOM ||
@@ -318,32 +586,46 @@ int canmove(int new_row, int new_col, int *lastrow, int *lastcol) {
     // Check that every cell in the footprint is free ('0').
     for (int i = start_row; i <= end_row; i++) {
         for (int j = start_col; j <= end_col; j++) {
-            if (grid[i][j] != '0' && grid[i][j] != 'C' && grid[i][j] != '1' && grid[i][j] != '2' && grid[i][j] != '3' && grid[i][j] != '4' && grid[i][j] != 'T') {
+            if (grid[i][j] != '0' && grid[i][j] != 'C' && grid[i][j] != '1' && grid[i][j] != '2' && grid[i][j] != '3' && grid[i][j] != '4' && grid[i][j] != 'T' && grid[i][j] != 'G' && grid[i][j] != 'N') {
 				//difference: i-lastrow, j-lastcol
 				int drC = i - *lastrow;
 				int dcC = j - *lastcol;
 				double drow = (double)drC / CELLS_PER_INCH;
 				double dcol = (double)dcC / CELLS_PER_INCH;
-                printf("DEBUG: Obstacle found at (%d, %d): %c. The conflict delta is <%.2f,%.2f>\n", i, j, grid[i][j], drow,dcol);
+                printf("[Absolute playable field] DEBUG: Wall bounds (%d, %d): %c, while traversing at <%d,%d> The conflict distance of wall-centre is <%.2f,%.2f> [note that indicated here, the actual distance is 1/2\" less] \n",  i-3, j-3, grid[i][j],*lastrow-3, *lastcol-3,  drow,dcol);
+               
                 return 0;
             } else {
-			
-			*lastrow = new_row;//if this run was good, that means our current position is valid
-			*lastcol = new_col;
+           // printf("if this is the first run, these coords should be equal <%d,%d> [current], <%d,%d> [goodcoords]\n", robot_row, robot_col, *lastrow, *lastcol);
+			*lastrow = new_row;//if this run was good, that means our current position is valid. we would not record something
+			*lastcol = new_col;//that failed
 				
 			}
         }
     }
 //for box check
-    for (int i = start_row-6; i <= end_row+6; i++) {
-        for (int j = start_col-6; j <= end_col+6; j++) {
+    // 2) Clamp box-check region so it doesn't wrap around the grid
+    int min_row_box = start_row - 6;
+    int max_row_box = end_row + 6;
+    int min_col_box = start_col - 6;
+    int max_col_box = end_col + 6;
+
+    // Clamp the extended region to the entire field dimensions (i.e. the full grid)
+    if (min_row_box < 0)                    min_row_box = 0;
+    if (max_row_box > EFFECTIVE_HEIGHT_CELLS - 1)  max_row_box = EFFECTIVE_HEIGHT_CELLS - 1;
+    if (min_col_box < 0)                    min_col_box = 0;
+    if (max_col_box > EFFECTIVE_WIDTH_CELLS - 1)   max_col_box = EFFECTIVE_WIDTH_CELLS - 1;
+
+    for (int i = min_row_box; i <= max_row_box; i++) {
+        for (int j = min_col_box; j <= max_col_box; j++) {
             if (grid[i][j] == 'N' || grid[i][j] == 'G') {
-                printf("DEBUG: Box found at (%d, %d): %c\n", i, j, grid[i][j]);
+                printf("DEBUG: Box found at (%d, %d): %c\n", i-3, j-3,grid[i][j]);
 				int drC = i - *lastrow;
 				int dcC = j - *lastcol;
 				double drow = (double)drC / CELLS_PER_INCH;
 				double dcol = (double)dcC / CELLS_PER_INCH;
-                printf("DEBUG: Box found at (%d, %d): %c. The conflict delta is <%.2f,%.2f>\n", i, j, grid[i][j], drow,dcol);
+                printf("[Absolute playable field] DEBUG: Box found at (%d, %d): %c, while traversing at <%d,%d> The conflict distance of box-centre is <%.2f,%.2f> [note that indicated here, the actual distance is 1/2\" less] \n", i-3, j-3, grid[i][j],*lastrow-3, *lastcol-3,  drow,dcol);
+                printboxconflicts();
                 return 0;
             } else {
 			
@@ -353,7 +635,7 @@ int canmove(int new_row, int new_col, int *lastrow, int *lastcol) {
 			}
         }
     }
-    printf("DEBUG: Footprint is clear.\n");
+    //printf("DEBUG: Footprint is clear.\n");
     return 1;
 }
 
@@ -393,7 +675,7 @@ int canmovetorecursive(int cur_row, int cur_col, int dest_row, int dest_col) {
 int canmoveto(double delta_row_in, double delta_col_in) {
     // Check that movement is along one axis only.
 
-    printf("DEBUG: fabs(delta_row_in) = %.4f, fabs(delta_col_in) = %.6f\n",
+    printf("DEBUG: CANMOVETO (delta_row_in) = %.4f, (delta_col_in) = %.6f\n",
        (delta_row_in), (delta_col_in));
 
 
@@ -410,11 +692,17 @@ int canmoveto(double delta_row_in, double delta_col_in) {
     int dest_col = robot_col + d_col;
     
     // Print debug info:
-    printf("DEBUG: canmoveto: Current position: (%d, %d). Delta: (%d, %d) <Y,x>. Destination <R,C>: (%d, %d).\n",
-           robot_row, robot_col, d_row, d_col, dest_row, dest_col);
-    
+    printf("DEBUG: canmoveto: Current position: (%.2f, %.2f). Delta: (%.2f, %.2f) <Y,x>. [Playable field absolute] Destination: (%.2f, %.2f).\n",
+        (robot_row - BORDER_CELLS) / (double)CELLS_PER_INCH,
+        (robot_col - BORDER_CELLS) / (double)CELLS_PER_INCH,
+        d_row / (double)CELLS_PER_INCH,
+        d_col / (double)CELLS_PER_INCH,
+        (dest_row - BORDER_CELLS) / (double)CELLS_PER_INCH,
+        (dest_col - BORDER_CELLS) / (double)CELLS_PER_INCH);
     return canmovetorecursive(robot_row, robot_col, dest_row, dest_col);
 }
+
+
 
 
 // initializegrid() marks border cells with 'B' and inner cells with '0'.
@@ -430,6 +718,28 @@ void initializegrid(void) {
         //grid[i][EFFECTIVE_WIDTH_CELLS] = '\0'; // Null-terminate each row for printing
     }
 }
+
+
+int alignYcave(void) {
+    // Compute the current x coordinate (in inches relative to the playable area)
+    double current_x = (robot_col - BORDER_CELLS) / (double) CELLS_PER_INCH;
+    // The cave entry y-axis is given relative to the playable area (in inches)
+    double target_y = (double) CAVE_ENTRY_YAXIS / (double) CELLS_PER_INCH;
+
+    printf("alignYcave: Current X position (inches) = %.2f\n", current_x);
+    printf("alignYcave: Aligning Y to cave entry at %.2f inches.\n", target_y);
+
+    // Use the global robot_col (converted to inches) and the target_y.
+    int result = moverobotxy(current_x, target_y);
+    if (result) {
+        printf("alignYcave: Successfully aligned Y to cave entry.\n");
+    } else {
+        printf("alignYcave: Failed to align Y to cave entry.\n");
+    }
+    return result;
+}
+
+
 
 // placerobotrandom() places the robot's center at a random location within the accessible area.
 // The robot's center is marked with 'C'. (No direction indicator cell is set.)
@@ -451,7 +761,7 @@ void placerobotrandom(void) {
 // It clears the old robot position and marks the new one with 'C'.
 void setrobotposition(int new_row, int new_col) {//row = y, col= x
     // Check that the target cell contains a valid element.
-    char valid_chars[] = {'0', 'T', '1', '2', '3', '4'};
+    char valid_chars[] = {'0', 'T', '1', '2', '3', '4', 'C'};//'C' exists in the case the state needs to revert 
     int valid = 0;
     for (int i = 0; i < sizeof(valid_chars)/sizeof(valid_chars[0]); i++) {
         if (grid[(new_row)][(new_col)] == valid_chars[i]) {
@@ -475,10 +785,11 @@ void setrobotposition(int new_row, int new_col) {//row = y, col= x
     robot_col = new_col;
 	lastevictedelement = grid[(new_row)][(new_col)];
     grid[(robot_row)][(robot_col)] = 'C';
-	lastGoodCoord[0] = robot_row;
+	lastGoodCoord[0] = robot_row;//the state recall intrinsically resets lastgoodcoords after a failed attempt in finding a path
 	lastGoodCoord[1] = robot_col;
     printf("ROBOT RELOCATED TO (%d, %d)!!!! Last evicted element: '%c'\n", 
            robot_row, robot_col, lastevictedelement);
+    printsurroundingrows();     
 	//printentiregrid();
 }
 
@@ -513,7 +824,7 @@ void printsurroundingrows(void) {
     for (int i = start_row; i <= end_row; i++) {
         // Left header: print an asterisk if this row equals robot_row; otherwise, print the row number.
         if (i == robot_row)
-            printf("%-5s ", "*");
+            printf("%-5s ", ">");
         else
             printf("%-5d ", i);
         // Print the row's data for columns in the window.
@@ -534,6 +845,58 @@ void printsurroundingrows(void) {
 }
 
 
+void printboxconflicts(void) {
+    // Extend the window by an extra 6 cells on each side.
+    int extra = 6;
+    int start_row = robot_row - ROTATION_CLEARANCE_CELLS - extra;
+    int end_row = robot_row + ROTATION_CLEARANCE_CELLS + extra;
+    if (start_row < 0) start_row = 0;
+    if (end_row >= EFFECTIVE_HEIGHT_CELLS) end_row = EFFECTIVE_HEIGHT_CELLS - 1;
+
+    int start_col = robot_col - ROTATION_CLEARANCE_CELLS - extra;
+    int end_col = robot_col + ROTATION_CLEARANCE_CELLS + extra;
+    if (start_col < 0) start_col = 0;
+    if (end_col >= EFFECTIVE_WIDTH_CELLS) end_col = EFFECTIVE_WIDTH_CELLS - 1;
+
+    printf("Box conflicts view:\n");
+
+    // Top header: mark the robot's column with an asterisk, and print "|" at multiples of 5.
+    printf("      ");
+    for (int j = start_col; j <= end_col; j++) {
+        if (j == robot_col)
+            printf("%-5s", "*");
+        else if (j % 5 == 0)
+            printf("%-5s", "|");
+        else
+            printf("%-5s", " ");
+    }
+    printf("\n");
+
+    // Print rows: left header prints ">" for the robot's row, otherwise the row number.
+    for (int i = start_row; i <= end_row; i++) {
+        if (i == robot_row)
+            printf("%-5s ", ">");
+        else
+            printf("%-5d ", i);
+        for (int j = start_col; j <= end_col; j++) {
+            printf("%c", grid[i][j]);
+        }
+        printf("\n");
+    }
+
+    // Bottom header, same as top.
+    printf("      ");
+    for (int j = start_col; j <= end_col; j++) {
+        if (j == robot_col)
+            printf("%-5s", "*");
+        else if (j % 5 == 0)
+            printf("%-5s", "|");
+        else
+            printf("%-5s", " ");
+    }
+    printf("\n");
+}
+
 
 void printentiregrid(void) {
     // Print top header: loop over all columns in the grid.
@@ -550,7 +913,7 @@ void printentiregrid(void) {
     // Print every row.
     for (int i = 0; i < EFFECTIVE_HEIGHT_CELLS; i++) {
         if (i == robot_row)
-            printf("%-5s ", "*");
+            printf("%-5s ", ">");
         else
             printf("%-5d ", i);
         for (int j = 0; j < EFFECTIVE_WIDTH_CELLS; j++) {
