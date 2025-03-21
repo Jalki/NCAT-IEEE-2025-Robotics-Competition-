@@ -1,0 +1,9 @@
+🧪 How to Use:
+
+    Connect a pushbutton between pin 7 and 3.3V.
+    On startup:
+        If button is pressed, enters calibration mode for 5 seconds.
+        Otherwise, tries to load saved calibration from flash.
+    You can delete stored calibration with:
+
+kv_remove("/kv/magCal");
