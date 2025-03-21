@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <pthread.h>
-#include <Python.h>
+//#include <Python.h>
 #include <wiringPi.h>
 #include <wiringPiSPI.h>
 #include <stdlib.h>
@@ -13,13 +13,15 @@
 #define BAUDRATE B9600
 //#include "PhotoresistorOperation.C"
 //#include "IR_Avoidance.C"
-//include "AprilTag.C"
+//#include "AprilTag.C"
+//#include "UART_Comms.C"
 
 //This is the main file for the IEEE 2025 Southeast Con robotics competition. All code is public and open sourced.
 //Most of this code is simply a overarching state machine to control what happens in said state, and the switching of states!
 int State = 0; //0-Inert State (IS), 1-Calibration State (CS), 2-Signal LED State (SLS), 3-Ambient Navigation State (ANS), 4- Cave Navigation State (CNS), 5- Failed State (FS)
 
 int user; //Integer to look at what user wants (TESTING ONLY!)
+
 
 //Define values
 #define NUM_THREADS 4 //Rpi has 4 cores, 1 thread each, meaning 4 threads max
@@ -68,6 +70,7 @@ void Inert_State()
                 printf("~Testing Motor Test~ \n");
             break;
             case 5:
+                //setup();
                 printf("~Testing Sorting Test~ \n");
             break;
             case 6:
@@ -76,11 +79,11 @@ void Inert_State()
             case 7:
                 printf("~Testing Unit Test~ \n");
             break;
-            
         default:
             break;
         }
 }
+
 void StateTrans() //This function controls the transisting of the state machine
 {
     switch(State)
@@ -105,37 +108,6 @@ void StateTrans() //This function controls the transisting of the state machine
             State = 0;
             Inert_State();
             break;
-    }
-}
-
-int main(void){
-    pthread_t thrd_1, thrd_2, thrd_3, thrd_4;
-
-    //Creates threads
-    if (pthread_create(&thrd_1, NULL, actuactors_work, NULL) != 0){
-        perror("pthread_create for thread 1 failed");
-    }
-
-    if (pthread_create(&thrd_2, NULL, sensors_work, NULL) != 0){
-        perror("pthread_create for thread 2 failed");
-    }
-
-    if (pthread_create(&thrd_3, NULL, camera_work, NULL) != 0){
-        perror("pthread_create for thread 3 failed");
-    }
-
-    if (pthread_create(&thrd_4, NULL, data_work, NULL) != 0){
-        perror("pthread_create for thread 4 failed");
-    }
-
-    while(State > 0){
-        StateTrans();
-        // Wait for the threads to finish
-        pthread_join(thrd_1, NULL);
-        pthread_join(thrd_2, NULL);
-        pthread_join(thrd_3, NULL);
-        pthread_join(thrd_4, NULL);
-        return 0;
     }
 }
 
@@ -210,9 +182,10 @@ int setup_uart() {
     options.c_iflag = IGNPAR;
     options.c_oflag = 0;
     options.c_lflag = 0;
+    options.c_cc[VMIN] = 1;
+    options.c_cc[VTIME] = 10;
     tcflush(uart_fd, TCIFLUSH);
     tcsetattr(uart_fd, TCSANOW, &options);
-    
     return uart_fd;
 }
 
@@ -244,13 +217,23 @@ void receive_data(int uart_fd) {
     }
 }
 
-int main() {
-    int uart_fd = setup_uart();
-    if (uart_fd == -1) return 1;
-    
-    send_data(uart_fd, "Hello UART");
-    receive_data(uart_fd);
-    
-    close(uart_fd);
-    return 0;
+int main(void){
+    pthread_t thrd_1, thrd_2, thrd_3, thrd_4;
+
+    //Creates threads
+    if (pthread_create(&thrd_1, NULL, actuactors_work, NULL) != 0){
+        perror("pthread_create for thread 1 failed");
+    }
+
+    if (pthread_create(&thrd_2, NULL, sensors_work, NULL) != 0){
+        perror("pthread_create for thread 2 failed");
+    }
+
+    if (pthread_create(&thrd_3, NULL, camera_work, NULL) != 0){
+        perror("pthread_create for thread 3 failed");
+    }
+
+    if (pthread_create(&thrd_4, NULL, data_work, NULL) != 0){
+        perror("pthread_create for thread 4 failed");
+    }
 }

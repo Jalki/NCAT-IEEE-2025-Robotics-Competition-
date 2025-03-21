@@ -2,14 +2,86 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "C/C++: Debug Active File (GCC)",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${fileDirname}/${fileBasenameNoExtension}",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${fileDirname}",
+      "environment": [],
+      "externalConsole": false,
+      "MIMode": "gdb",
+      "setupCommands": [
+        {
+          "description": "Enable pretty-printing for gdb",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        },
+        {
+          "description": "Set Disassembly Flavor to Intel",
+          "text": "-gdb-set disassembly-flavor intel",
+          "ignoreFailures": true
+        }
+      ],
+      "preLaunchTask": "C/C++: gcc build active file",
+      "miDebuggerPath": "/usr/bin/gdb"
+    },
+    {
+      "name": "C/C++: Debug Active File (GCC-12)",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${fileDirname}/${fileBasenameNoExtension}",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${fileDirname}",
+      "environment": [],
+      "externalConsole": false,
+      "MIMode": "gdb",
+      "setupCommands": [
+        {
+          "description": "Enable pretty-printing for gdb",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        },
+        {
+          "description": "Set Disassembly Flavor to Intel",
+          "text": "-gdb-set disassembly-flavor intel",
+          "ignoreFailures": true
+        }
+      ],
+      "preLaunchTask": "C/C++: gcc-12 build active file",
+      "miDebuggerPath": "/usr/bin/gdb"
+    },
+    {
+      "name": "C/C++: Debug Custom Binary",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "/home/SECON2025/Documents/GitHub/NCAT-IEEE-2025-Robotics-Competition-/J_Files/Code/Sensors/Arduino/build/Debug/outDebug",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "/home/SECON2025/Documents/GitHub/NCAT-IEEE-2025-Robotics-Competition-/J_Files/Code/Sensors/Arduino",
+      "environment": [],
+      "externalConsole": false,
+      "MIMode": "gdb",
+      "setupCommands": [
+        {
+          "description": "Enable pretty-printing for gdb",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        }
+      ],
+      "miDebuggerPath": "/usr/bin/gdb"
+    },
+    {
       "name": "C/C++ Runner: Debug Session",
       "type": "cppdbg",
       "request": "launch",
       "args": [],
       "stopAtEntry": false,
       "externalConsole": false,
-      "cwd": "/home/SECON2025/Documents/GitHub/NCAT-IEEE-2025-Robotics-Competition-/J_Files/Code/Sensors/Arduino",
-      "program": "/home/SECON2025/Documents/GitHub/NCAT-IEEE-2025-Robotics-Competition-/J_Files/Code/Sensors/Arduino/build/Debug/outDebug",
+      "cwd": "/home/SECON2025/Documents/GitHub/NCAT-IEEE-2025-Robotics-Competition-/J_Files/Code/Sensors",
+      "program": "/home/SECON2025/Documents/GitHub/NCAT-IEEE-2025-Robotics-Competition-/J_Files/Code/Sensors/build/Debug/outDebug",
       "MIMode": "gdb",
       "miDebuggerPath": "gdb",
       "setupCommands": [

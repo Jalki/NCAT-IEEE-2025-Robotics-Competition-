@@ -2,11 +2,12 @@
 #include <wiringPi.h>
 #include <sys/time.h>
 
-#define TRIG1 18  // GPIO 18
+
+#define TRIG1 03  // GPIO 2
 #define ECHO1 24  // GPIO 24
-#define TRIG2 23  // GPIO 23
+#define TRIG2 03  // GPIO 2
 #define ECHO2 25  // GPIO 25
-#define TRIG3 4  // GPIO 27
+#define TRIG3 03  // GPIO 2
 #define ECHO3 17  // GPIO 22
 
 // Function to get the current time in microseconds
@@ -43,6 +44,8 @@ double getDistance(int trig, int echo) {
 }
 
 int main() {
+    printf("entered main");
+    
     if (wiringPiSetupGpio() == -1) {
         printf("WiringPi initialization failed!\n");
         return 1;

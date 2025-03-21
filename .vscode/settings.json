@@ -67,7 +67,8 @@
     "ArduinoBLE_Read.C": "cpp",
     "UART_Comms.C": "cpp",
     "Test.C": "cpp",
-    "SendingFunctionsUART.C": "cpp"
+    "SendingFunctionsUART.C": "cpp",
+    "RaspberryPiLoaders.C": "cpp"
   },
   "C_Cpp.errorSquiggles": "disabled"
 }
