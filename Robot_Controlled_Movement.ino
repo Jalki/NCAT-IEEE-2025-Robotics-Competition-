@@ -1,5 +1,7 @@
 #include "Arduino_BMI270_BMM150.h"
 
+#include "Arduino_BMI270_BMM150.h"
+
 // Motor pins
 int Motor1For = 2;
 int Motor1Back = 3;
@@ -25,21 +27,16 @@ float alpha = 0.1; // Filter coefficient (adjust as needed)
 float filteredAccelX = 0, filteredAccelY = 0, filteredAccelZ = 0;
 
 // Stationary detection threshold
-float stationaryThreshold = 0.05; // Adjust based on noise level
+float stationaryThreshold = 0.05; // Adjust based on noise level ONLY CHANGE THIS IF YOU HAVE A DIFFERENT SENSOR, YOUR NOISE WILL BE DIFFERENT!
 
 // Velocity damping factor
-float dampingFactor = 0.02; // Adjust as needed
+float dampingFactor = 0.02; // Adjust as needed reduce if velocity is changing to fast, increase if velocity is changing to slow
 
 // Movement control
 enum State { FORWARD, BACKWARD, LEFT, RIGHT, STOP };
 State currentState = FORWARD;
-float targetDistance = 0.010; // Target distance in meters (10 cm)
+float targetDistance = 0.01; // Target distance in meters (1 cm)
 bool movementComplete = false;
-
-// Gyroscope variables
-float yaw = 0; // Current yaw angle (orientation)
-float gyroDrift = 0; // Gyroscope drift compensation
-unsigned long lastGyroTime = 0; // Timestamp for the last gyroscope reading
 
 void setup() {
   Serial.begin(9600);
@@ -64,9 +61,6 @@ void setup() {
   pinMode(Motor3Back, OUTPUT);
   pinMode(Motor4For, OUTPUT);
   pinMode(Motor4Back, OUTPUT);
-
-  // Calibrate gyroscope drift
-  calibrateGyroDrift();
 }
 
 void loop() {
@@ -125,9 +119,6 @@ void loop() {
     Serial.print(positionZ);
     Serial.println(" m");
 
-    // Update yaw angle using gyroscope
-    updateYaw();
-
     // Control movement based on state
     switch (currentState) {
       case FORWARD:
@@ -149,7 +140,7 @@ void loop() {
         break;
 
       case LEFT:
-        move_Strafe_Left();
+        rotate_gyro(180.0);
         if (positionY >= targetDistance) {
           stop_movement();
           currentState = RIGHT;
@@ -158,10 +149,10 @@ void loop() {
         break;
 
       case RIGHT:
-        move_Strafe_Right();
+        rotate_gyro(-360.0);
         if (positionY <= -targetDistance) {
           stop_movement();
-          currentState = STOP;
+          currentState = FORWARD;
         }
         break;
 
@@ -169,10 +160,55 @@ void loop() {
         // Do nothing
         break;
     }
-
-    // Correct orientation drift
-    correctOrientation();
   }
+}
+
+void rotate_gyro(float targetAngle) {
+    float angleRotated = 0;
+    float gx, gy, gz;
+    float gyroDrift = 0;
+    unsigned long prevTime = millis();
+
+    // **1. Measure drift before rotation**  
+    int numSamples = 50;
+    for (int i = 0; i < numSamples; i++) {
+        if (IMU.gyroscopeAvailable()) {
+            IMU.readGyroscope(gx, gy, gz);
+            gyroDrift += gz;  // Accumulate Z-axis drift
+        }
+        delay(10);  // Small delay between samples
+    }
+    gyroDrift /= numSamples;  // Average drift over samples
+
+    // **2. Determine rotation direction**
+    bool clockwise = (targetAngle > 0);
+    if (clockwise) {
+        move_Rotate_Clockwise();
+    } else {
+        move_Rotate_CounterClockwise();
+    }
+
+    // **3. Rotate while compensating for drift**
+    while (abs(angleRotated) <= abs(targetAngle)) {  
+        if (IMU.gyroscopeAvailable()) {
+            IMU.readGyroscope(gx, gy, gz);
+            
+
+            // Apply drift correction
+            gz -= gyroDrift;
+
+            // Compute time elapsed
+            unsigned long currentTime = millis();
+            float deltaTime = (currentTime - prevTime) / 1000.00; // Convert ms to seconds
+            prevTime = currentTime;
+
+            // Integrate gyroscope data to estimate angle rotated
+            angleRotated += gz * deltaTime;
+            Serial.println(angleRotated);
+            //positionalData[2] = angleRotated;
+        }
+    }
+    stop_movement();  // Stop once the target angle is reached
 }
 
 // Function to check if the sensor is stationary
@@ -209,59 +245,6 @@ void calibrateBias() {
   Serial.print(biasY);
   Serial.print(", Z: ");
   Serial.println(biasZ);
-}
-
-// Function to calibrate gyroscope drift
-void calibrateGyroDrift() {
-  int numSamples = 50;
-  float gx, gy, gz;
-  gyroDrift = 0;
-
-  for (int i = 0; i < numSamples; i++) {
-    if (IMU.gyroscopeAvailable()) {
-      IMU.readGyroscope(gx, gy, gz);
-      gyroDrift += gz; // Accumulate Z-axis drift
-    }
-    delay(10); // Small delay between samples
-  }
-  gyroDrift /= numSamples; // Average drift over samples
-}
-
-// Function to update yaw angle using gyroscope
-void updateYaw() {
-  float gx, gy, gz;
-  if (IMU.gyroscopeAvailable()) {
-    IMU.readGyroscope(gx, gy, gz);
-
-    // Apply drift correction
-    gz -= gyroDrift;
-
-    // Compute time elapsed
-    unsigned long currentTime = millis();
-    float deltaTime = (currentTime - lastGyroTime) / 1000.0; // Convert ms to seconds
-    lastGyroTime = currentTime;
-
-    // Integrate gyroscope data to estimate yaw angle
-    yaw += gz * deltaTime;
-  }
-}
-
-// Function to correct orientation drift
-void correctOrientation() {
-  float yawThreshold = 5.0; // Threshold for orientation correction (degrees)
-  float correctionSpeed = 0.1; // Speed of correction (adjust as needed)
-
-  if (abs(yaw) > yawThreshold) {
-    if (yaw > 0) {
-      // Rotate counter-clockwise to correct
-      move_Rotate_CounterClockwise();
-    } else {
-      // Rotate clockwise to correct
-      move_Rotate_Clockwise();
-    }
-    delay(correctionSpeed * 1000); // Apply correction for a short time
-    stop_movement();
-  }
 }
 
 // Motor control functions (unchanged)
@@ -309,26 +292,41 @@ void move_Strafe_Right() {
   digitalWrite(Motor4Back, HIGH);
 }
 
-void move_Rotate_Clockwise() {
+//Moves Clockwise
+void move_Rotate_Clockwise(){
   digitalWrite(Motor1For, HIGH);
   digitalWrite(Motor1Back, LOW);
+  //analogWrite(D1ENA1pin, pwm * 0.50);
+
   digitalWrite(Motor2For, LOW);
   digitalWrite(Motor2Back, HIGH);
+  //analogWrite(D1ENA2pin, pwm * 0.50);
+
   digitalWrite(Motor3For, LOW);
   digitalWrite(Motor3Back, HIGH);
+  //analogWrite(D2ENA1pin, pwm * 0.50);
+
   digitalWrite(Motor4For, HIGH);
   digitalWrite(Motor4Back, LOW);
+  //analogWrite(D2ENA2pin, pwm * 0.50);
 }
-
-void move_Rotate_CounterClockwise() {
+//Moves Counter Clockwise
+void move_Rotate_CounterClockwise(){  
   digitalWrite(Motor1For, LOW);
   digitalWrite(Motor1Back, HIGH);
+  
+
   digitalWrite(Motor2For, HIGH);
   digitalWrite(Motor2Back, LOW);
+  
+
   digitalWrite(Motor3For, HIGH);
   digitalWrite(Motor3Back, LOW);
+  
+
   digitalWrite(Motor4For, LOW);
   digitalWrite(Motor4Back, HIGH);
+
 }
 
 void stop_movement() {
