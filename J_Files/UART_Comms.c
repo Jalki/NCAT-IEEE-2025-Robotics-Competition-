@@ -8,6 +8,8 @@
 #include <errno.h>    // Error handling
 #include <sys/time.h> // System time functions
 
+#include "move.c" //This is Arnold Grid code!!!
+
 #define UART_PORT "/dev/ttyAMA0" // Change this to your actual serial port
 
 char gyro[256];
@@ -52,6 +54,20 @@ void uart_direction_Write(int fd, float x, float y, float rotation) {
     }
 }
 
+//Seperate function to actively write what state the robot is in!
+void uart_write_state(int fd, int State)
+{
+    char data[50];
+    snprintf(data, sizeof(data), "%.2d \n", State);
+
+    int bytes_written = write(fd, data, strlen(data));
+    if(bytes_written < 0){
+        perror("UART Write Error");
+    }else {
+        printf ("Sent: %s", data);
+    }
+}
+
 // Function to read data from UART
 void uart_read(int fd) {
     int index = 0;
@@ -74,19 +90,13 @@ void uart_read(int fd) {
 }
 
 int main() {
-    int uart_fd = open(UART_PORT, O_RDWR | O_NOCTTY);
-    if (uart_fd == -1) {
-        perror("Unable to open UART");
-        return -1;
-    }
+    initalizemovement();
 
-    configure_uart(uart_fd);
-
-    float x = 0.34, z = 0.78, rotation = 90.12;
+    
 
     while (1) {
         uart_read(uart_fd);
-        uart_direction_Write(uart_fd, x, z, rotation);
+        uart_direction_Write(uart_fd, x, y, rotation);
         sleep(1);
     }
 

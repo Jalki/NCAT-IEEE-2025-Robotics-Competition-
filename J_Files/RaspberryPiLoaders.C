@@ -33,10 +33,10 @@ void setup()
 }
 
 void Brush(){
+    //while(1){}
     printf("Brush moving\n");
     digitalWrite(Brush_Motor, HIGH); // Turn on motor
-    delay(5000); // Run motor for 500ms
-    digitalWrite(Brush_Motor, LOW); // Turn off motor
+    //digitalWrite(Brush_Motor, LOW); // Turn off motor
 }
 
 void Step(){

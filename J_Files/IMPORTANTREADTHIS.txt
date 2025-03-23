@@ -1,0 +1,11 @@
+The usleep() function in C suspends execution of the calling thread for the number of microseconds specified in its argument. 
+It's part of the unistd.h header and is used for introducing short delays in a program's execution.
+
+The usleep() function takes one argument:
+
+    microseconds: The number of microseconds to suspend execution. 
+
+It returns 0 on success and -1 on error.
+While usleep() is still widely available, it has been marked as obsolete by POSIX. 
+The recommended alternative is nanosleep(), which provides finer-grained control over sleep duration. 
+However, usleep() remains useful for simpler cases where microsecond-level precision is sufficient.
