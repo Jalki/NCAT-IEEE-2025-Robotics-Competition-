@@ -67,9 +67,9 @@ void reconcile(double front_cm, double left_cm, double right_cm);
 void initalizemovement(void);
 int moverobotxy(double target_x, double target_y);//NEW: By popular demand, this was made
 //Note: this is NOT a minmax algorithm since there are only 2 cases
-void printboxconflicts(void);//Best for viewing wall/box conflicts
+void printboxconflicts(void);//Best for viewing wall/box conflicts [unreliable for general diagonosis]
 int alignYcave(void);
-
+void getrobotparams(void);//prints robot rotation and position
 
 //helper functioins
 int moverobotdirection(char rel_dir, double distance_in);  // moves robot in one of four directions
@@ -95,45 +95,7 @@ int main(void) {
     // Initialize grid and regions.
     initalizemovement();
 	runEdgeCaseTests();
-    // --- Test moverobotdirection and then perform a rotation test after each move ---
-    
-    // Test 1: Move up extent.
-    // For a robot facing North, a forward ('F') movement of 32 inches should move it upward.
-   // printf("\nTest 1: Move up extent...\n");
-	//moverobotxy(-5,35);
-	//printsurroundingrows();
-	//rotaterobot(360);
-   /* moverobotdirection('F',3+ 3);
-    printf("\nRotation Test 1: Rotating robot 90 degrees...\n");
-    rotaterobot(90);
-    printentiregrid();
 
-    // Test 2: Move down extent.
-    // For a robot facing (after rotation) the appropriate direction, use 'B' for backward.
-    printf("\nTest 2: Move down extent...\n");
-    moverobotdirection('B', 2.0);
-    printf("\nRotation Test 2: Rotating robot -90 degrees...\n");
-    rotaterobot(-90);
-    printentiregrid();
-
-    // Test 3: Move right extent.
-    printf("\nTest 3: Move right extent...\n");
-    moverobotdirection('R', 10.5);
-    printf("\nRotation Test 3: Rotating robot 180 degrees...\n");
-    rotaterobot(180);
-    printentiregrid();
-
-    // Test 4: Move left extent.
-    printf("\nTest 4: Move left extent...\n");
-    moverobotdirection('L', 25.0);
-    printf("\nRotation Test 4: Rotating robot 90 degrees...\n");
-    rotaterobot(90);
-    printentiregrid();
-
-    // Test 5: Error test - invalid relative direction.
-    printf("\nTest 5: Error test: calling moverobotdirection('X', 1.0)...\n");
-    moverobotdirection('X', 1.0);
-*/
     return 0;
 }
 
@@ -148,6 +110,8 @@ void runEdgeCaseTests(void) {
     //    or the center of the field. For example:
     moverobotdirection('B', 0.5);
     moverobotxy(6,12);  // ~12 inches in from top-left
+
+    getrobotparams();
 
     printf("\n[TEST] Robot placed near top-left corner, facing north.\n");
 
@@ -169,19 +133,15 @@ void runEdgeCaseTests(void) {
         printf("[ERROR] Could not navigate deeper inside the cave at (85,35).\n");
     }
 
-    // 4. Exit the cave to an open region, say x=60, y=30. (Back out or around the corridor.)
-    printf("\n[TEST] Exiting the cave to open field.\n");
-    if (!moverobotxy(87,6)) {
-        printf("[ERROR] Could not navigate back out to (60,30).\n");//PASS MARK
+    printf("\n[FTEST] LOWER STUD TEST\n");
+    if (!moverobotxy(86.5,38.5)) {
+        printf("[ERROR] Could not pass lower studs.\n");//PASS
     }
 
-    // 5. Test corners: top-left corner is (0,0).
-    //    Because we’re referencing playable area coordinates, that’s just (0,0).
-    printf("\n[TEST] Navigating to top-left playable corner (0,0).\n");
-    if (!moverobotxy(87,38.5)) {
-        printf("[ERROR] Could not reach top-left corner.\n");//PASS
+    printf("\n[FTEST] UPPER STUD TEST\n");
+    if (!moverobotxy(86.5,6)) {
+        printf("[ERROR] Could not pass upper studs.\n");//PASS
     }
-
     // 6. Next, top-right corner is (93,0).
     printf("\n[TEST] Navigating to top-right playable corner (93,0).\n");
     if (!moverobotxy(93.0, 0.0)) {
@@ -212,18 +172,25 @@ void runEdgeCaseTests(void) {
         printf("[ERROR] Could not pass upper studs.\n");//PASS
     }
 
+    printf("y aligning...");
+    alignYcave();
+
+    printf("\n[TEST] UPPER RIGHT CORNER OUTSIDE CAVE\n");
+    if (!moverobotxy(48.5,6)) {
+        printf("[ERROR] Could not to outside cave corner\n");//PASS
+    }
+
+
+       printf("\n[TEST] UUNOCCUPIED G BOX\n");
+    if (!moverobotxy(48.5,38.5)) {
+        printf("[ERROR] Could not to outside cave corner\n");//PASS
+    }
+
     printf("\n[TEST] HOME TEST\n");
     if (!moverobotxy(38.5,31)) {
         printf("[ERROR] Could not go home\n");//PASS
     }
 
-    printf("y aligning...");
-    alignYcave();
-
-    printf("testing outside upper side by left of cave...");
-    if (!moverobotxy(38.5,31)) {
-        printf("[ERROR] Could not go home\n");//PASS
-    }
 
 
     printf("\n[TEST] Finished edge-case tests.\n");
@@ -380,7 +347,7 @@ int moverobotxy(double target_x, double target_y) {//todo: track successful delt
 
     double dx = target_x - current_x; // horizontal difference in inches
     double dy = target_y - current_y; // vertical difference in inches
-
+    char primarydeltaaxis = '0';//default: 0 means no movement is allowed
     printf("moverobotxy: Target (inches): (%.2f, %.2f), Current (inches): (%.2f, %.2f), dx = %.2f, dy = %.2f\n",
            target_x, target_y, current_x, current_y, dx, dy);
 
@@ -390,6 +357,7 @@ int moverobotxy(double target_x, double target_y) {//todo: track successful delt
 
     // Order 1: Move horizontally (x) then vertically (y).
     printf("moverobotxy: Trying order 1 (x then y)...\n");
+    primarydeltaaxis = 'x';
     if (dx != 0.0) {
         char rel_x;
         if (robot_dir == 'N')
@@ -432,6 +400,7 @@ int moverobotxy(double target_x, double target_y) {//todo: track successful delt
 try_order2:
     // Order 2: Move vertically then horizontally.
     printf("moverobotxy: Trying order 2 (y then x)...\n");
+    primarydeltaaxis = 'y';
     restoreRobotState(orig);
     if (dy != 0.0) {
         char rel_y;
@@ -473,10 +442,22 @@ try_order2:
 
 finish:
     if (success) {
+        //Jaleen notes:
+        //"dx", "dy" are the deltas to send
+        //the c code responsible for sending to the ardunio starts here. here, you can call a function existing in a different script, making sure the script
+        //that is a level closer to the arduino/pi boundary included in this code
+        //note: the primary axis indicates what movement along which axis must occur first. The motions are done one axis at a time, do not try diagonals
+        //because this grid doesnt support diagonal checks and is not designed around such movements
+
+        //pass primary axis and deltas in a function here
+
         printf("moverobotxy: Successfully moved to target playable inches (%.2f, %.2f) corresponding to grid (%d, %d).\n",
                target_x, target_y, target_row-BORDER_CELLS, target_col-BORDER_CELLS);
         return 1;
     } else {
+        primarydeltaaxis = '0';//by default, this disallows any movement regardless of delta values
+        //you could still call the function for feedback on the code that interfaces the pi/arduino
+
         printf("moverobotxy: Could not find a valid path to the target.\n");
         restoreRobotState(orig);
         return 0;
@@ -789,6 +770,7 @@ void setrobotposition(int new_row, int new_col) {//row = y, col= x
 	lastGoodCoord[1] = robot_col;
     printf("ROBOT RELOCATED TO (%d, %d)!!!! Last evicted element: '%c'\n", 
            robot_row, robot_col, lastevictedelement);
+
     printsurroundingrows();     
 	//printentiregrid();
 }
@@ -1044,7 +1026,7 @@ void initregions(void) {
 	//boxes initalized <R,C>
 	
     grid[PO(Nboxrow)][PO(Nboxcol)] = 'N';
-    grid[PO(Gboxrow)][PO(Gboxcol)] = 'G';
+   // grid[PO(Gboxrow)][PO(Gboxcol)] = 'G';
     
     // Region 7: from <98,90> to <110,78> = 'G'
     // With y axis pointing downward, we interpret this as the region spanning
@@ -1080,3 +1062,20 @@ void initregions(void) {
 }
 
 
+void getrobotparams(void) {
+    double pos_x = (robot_col - BORDER_CELLS) / (double)CELLS_PER_INCH;
+    double pos_y = (robot_row - BORDER_CELLS) / (double)CELLS_PER_INCH;
+    char *facing;
+    
+    // Convert the robot's facing direction character to a full word.
+    switch(robot_dir) {
+        case 'N': facing = "North"; break;
+        case 'S': facing = "South"; break;
+        case 'E': facing = "East";  break;
+        case 'W': facing = "West";  break;
+        default:  facing = "Unknown"; break;
+    }
+    
+    printf("Robot Parameters: Facing %s, Position: (%.2f in, %.2f in) relative to playable field\n", 
+           facing, pos_x, pos_y);
+}
