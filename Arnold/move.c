@@ -53,16 +53,18 @@ typedef struct {
 // Grid stores the field (each cell is a character).
 // 'B' marks borders, '0' marks accessible cells, and 'C' marks the robot's center.
 int lastGoodCoord[2];
+double deltas[3] = {0.0, 0.0, 0.0};
 char grid[EFFECTIVE_HEIGHT_CELLS][EFFECTIVE_WIDTH_CELLS];
 int robot_row, robot_col, Nboxrow, Nboxcol, Gboxrow, Gboxcol;  // current position (grid indices) of the robot's center
 char robot_dir = 'N';      // global robot facing direction (N, E, S, or W)
 char lastevictedelement = '0';// this must be guaranteed or this wont work properly
+double angledelta = 0.0;
 
 // ----- Function Prototypes -----
 // Note: underscores have been removed from function names in both declarations and comments.
 //top level user functions
 
-void rotaterobot(int angle);          // rotates robot by a multiple of 90 degrees=
+int rotaterobot(int angle);       // rotates robot by a multiple of 90 degrees=
 void reconcile(double front_cm, double left_cm, double right_cm);
 void initalizemovement(void);
 int moverobotxy(double target_x, double target_y);//NEW: By popular demand, this was made
@@ -70,6 +72,10 @@ int moverobotxy(double target_x, double target_y);//NEW: By popular demand, this
 void printboxconflicts(void);//Best for viewing wall/box conflicts [unreliable for general diagonosis]
 int alignYcave(void);
 void getrobotparams(void);//prints robot rotation and position
+
+double* getdeltas(void);//once called, this will reset delta values. Set each time after a successful [return 1] alignYcave() and moverobotxy(...) is called.
+double getangledelta(void);//once this called, it will reset angle deltas. Set each time a successful [return 1] rotaterobot(...) is called
+
 
 //helper functioins
 int moverobotdirection(char rel_dir, double distance_in);  // moves robot in one of four directions
@@ -86,6 +92,8 @@ int canmoveto(double delta_row_in, double delta_col_in);
 int canmovetorecursive(int cur_row, int cur_col, int dest_row, int dest_col);
 RobotState getRobotState(void) ;
 void restoreRobotState(RobotState state);
+void recorddeltas(double dx, double dy, char primaryAxis);
+void setangledelta(double angle);
 void runEdgeCaseTests(void);
 
 
@@ -106,10 +114,24 @@ int main(void) {
 // Ensure that moverobotxy() and any needed global variables are already defined.
 
 void runEdgeCaseTests(void) {
+    //variable declarations for delta movements
+    double deltas[3] = {0.0, 0.0, 0.0};
+    double angledelta = 0.0;
+
+
     // 1. Start: place the robot at some known location, e.g. near the top-left corner
     //    or the center of the field. For example:
     moverobotdirection('B', 0.5);
-    moverobotxy(6,12);  // ~12 inches in from top-left
+    moverobotxy(20,22.5);// start with movement
+    //after a movement, a delta is recorded [a successful one]
+
+
+    //getting movement deltas snippet
+    double *mvDeltas = getdeltas();
+    printf("Main: The movement deltas are: dx = %.2f, dy = %.2f, primary axis = %c\n",
+           mvDeltas[0], mvDeltas[1], (char)mvDeltas[2]);
+    
+
 
     getrobotparams();
 
@@ -118,6 +140,42 @@ void runEdgeCaseTests(void) {
     if (!alignYcave()) {
         printf("[ERROR] Could not align to cave.\n");
     }
+
+    //start with rotation
+    rotaterobot(180);
+    //after a successful rotation, a delta is recorded
+
+    
+    //getting angle deltas after rotation
+    double aDelta = getangledelta();
+    printf("Main: The angle delta is: %.2f degrees\n", aDelta);
+
+    //This is a grosslysimple usage-- generally, you want to do:
+    // if rotatate/movement call then
+    // acquire deltas
+    // send data
+    // end
+
+        //UPDATE: the deltas support is done. general usage is
+        /**
+        1. condition check moverobotxy, this returns if the movement was tested to be possible. 1 = true, 0 = not possible
+        2. within the check, set getdeltas() like this:
+
+        double *myDeltas = getdeltas(); (double, double, double)
+
+        printf("Stored deltas: dx = %.2f, dy = %.2f, primary axis = %c\n",
+       myDeltas[0], myDeltas[1], (char)myDeltas[2]);
+
+       Where myDeltas is a file level array of size 3.
+       The third value is required to be casted as a char for correct data.current_x
+
+
+        3. You can then send a mechanical function by using the 3 dataset points myDeltas[0], myDeltas[1], (char)myDeltas[2], albeit with some logic to ensure deltas are done in an order starting
+        with the primary axis. [Most will read x axis with 0 dx, but there are some movements in which y will be first, particularly those involving walls]
+
+
+        */
+
 
     // 2. Move to the “cave” area on the right side. Suppose the cave entrance is near x=80, y=20.
     //    (Adjust these coordinates to match your actual field.)
@@ -213,16 +271,16 @@ void initalizemovement(void){
 // (i.e., a (2*ROTATION_CLEARANCE_CELLS)x(2*ROTATION_CLEARANCE_CELLS) region)
 // around the robot's center is free.
 // If clearance is insufficient, the rotation is not allowed.
-void rotaterobot(int angle) {
+int rotaterobot(int angle) {
     if (angle % 90 != 0) {
         printf("Error: Rotation angle must be a multiple of 90.\n");
-        return;
+        return 0;
     }
     // Check if there is enough clearance for rotation.
     if (!canrotate()) {
         printboxconflicts();
         printf("Rotation blocked: not enough clearance for a 15\" square around the robot.\n");
-        return;
+        return 0;
     }
 
     int delta = angle / 90;  // number of 90° steps
@@ -243,7 +301,11 @@ void rotaterobot(int angle) {
 
     char new_dirs[4] = {'N', 'E', 'S', 'W'};
     robot_dir = new_dirs[new_index];
+
+    setangledelta((double)angle);//new angle recorded
+
     printf("Rotated robot by %d degrees. New facing direction: %c\n", angle, robot_dir);
+    return 1;
 }
 
 // canrotate() checks that a 15" square (30 cells by 30 cells) around the robot's center is free.
@@ -449,15 +511,16 @@ finish:
         //note: the primary axis indicates what movement along which axis must occur first. The motions are done one axis at a time, do not try diagonals
         //because this grid doesnt support diagonal checks and is not designed around such movements
 
-        //pass primary axis and deltas in a function here
 
+        //pass primary axis and deltas in a function here
+		recorddeltas(dx,dy,primarydeltaaxis);//record successful deltas
         printf("moverobotxy: Successfully moved to target playable inches (%.2f, %.2f) corresponding to grid (%d, %d).\n",
                target_x, target_y, target_row-BORDER_CELLS, target_col-BORDER_CELLS);
         return 1;
     } else {
         primarydeltaaxis = '0';//by default, this disallows any movement regardless of delta values
         //you could still call the function for feedback on the code that interfaces the pi/arduino
-
+		recorddeltas(0.0,0.0,primarydeltaaxis);//record failed deltas
         printf("moverobotxy: Could not find a valid path to the target.\n");
         restoreRobotState(orig);
         return 0;
@@ -1079,3 +1142,52 @@ void getrobotparams(void) {
     printf("Robot Parameters: Facing %s, Position: (%.2f in, %.2f in) relative to playable field\n", 
            facing, pos_x, pos_y);
 }
+
+
+void recorddeltas(double dx, double dy, char primaryAxis) {
+    deltas[0] = dx;
+    deltas[1] = dy;
+    deltas[2] = (double) primaryAxis;  // store the character as a double (its ASCII value)
+    printf("recorddeltas: Recorded dx = %.2f, dy = %.2f, primary axis = %c\n", dx, dy, primaryAxis);
+}
+
+// getdeltas: Retrieves the recorded deltas into the variables pointed to by dx, dy, and primaryAxis.
+// It then resets the global deltas by calling recorddeltas with zeros and '0'.
+double* getdeltas(void) {
+    // Use a static array so it persists after the function returns.
+    static double result[3];
+
+    // Copy the current global delta values into the local array.
+    result[0] = deltas[0];
+    result[1] = deltas[1];
+    result[2] = deltas[2];
+
+    // Print the retrieved values.
+    printf("getdeltas: Retrieved dx = %.2f, dy = %.2f, primary axis = %c\n", 
+           result[0], result[1], (char)result[2]);
+
+    // Reset the global delta values.
+    recorddeltas(0.0, 0.0, '0');
+    printf("getdeltas: Reset deltas to 0, 0, '0'\n");
+
+    // Return a pointer to the static result array.
+    return result;
+}
+
+// setangledelta: Records the angle delta (in degrees) into the global variable.
+void setangledelta(double angle) {
+    angledelta = angle;
+    printf("setangledelta: Recorded angle delta = %.2f degrees\n", angle);
+}
+
+// getangledelta: Returns the currently stored angle delta (in degrees),
+// then resets the global variable to 0.
+double getangledelta(void) {
+    double ret = angledelta;
+    printf("getangledelta: Retrieved angle delta = %.2f degrees\n", ret);
+    // Reset the global angle delta value.
+    angledelta = 0.0;
+    printf("getangledelta: Reset angle delta to 0.0 degrees\n");
+    return ret;
+}
+
