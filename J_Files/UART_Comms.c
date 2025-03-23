@@ -40,9 +40,9 @@ void configure_uart(int uart_fd) {
 }
 
 // Function to send a float array as a comma-separated string
-void uart_direction_Write(int fd, float x, float z, float rotation) {
+void uart_direction_Write(int fd, float x, float y, float rotation) {
     char data[50];  // Buffer to hold formatted string
-    snprintf(data, sizeof(data), "%.2f,%.2f,%.2f\n", x, z, rotation);
+    snprintf(data, sizeof(data), "%.2f,%.2f,%.2f\n", x, y, rotation);
     
     int bytes_written = write(fd, data, strlen(data));
     if (bytes_written < 0) {

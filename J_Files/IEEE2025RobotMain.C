@@ -14,7 +14,8 @@
 //#include "PhotoresistorOperation.C"
 //#include "IR_Avoidance.C"
 //#include "AprilTag.C"
-//#include "UART_Comms.C"
+#include "UART_Comms.C" //Raspberry Pi Script to send and upload uart data for x, y, and rotation data!
+#include "RaspberryPiLoaders.C" //Raspberry Pi Loaders Script to control the loaders!
 
 //This is the main file for the IEEE 2025 Southeast Con robotics competition. All code is public and open sourced.
 //Most of this code is simply a overarching state machine to control what happens in said state, and the switching of states!
@@ -27,6 +28,7 @@ int user; //Integer to look at what user wants (TESTING ONLY!)
 #define NUM_THREADS 4 //Rpi has 4 cores, 1 thread each, meaning 4 threads max
 pthread_mutex_t print_mutex = PTHREAD_MUTEX_INITIALIZER;
 int trigger_threads = 0;
+int MotorCall = 0; //This calls certain motors from RaspberryPiLoaders. 1-Brush, 2-Step, 3-Screw, 4-LoaderRaise, 5-LoaderLower
 void Inert_State();
 void StateTrans();
 
@@ -86,29 +88,7 @@ void Inert_State()
 
 void StateTrans() //This function controls the transisting of the state machine
 {
-    switch(State)
-    {
-        //This is the actual states of the robot!
-        case 1: //Calibration State - sensor polling test, motor check
-            State = 1;
-            break;
-        case 2: //Signal LED State - wait LED signal
-            State = 2;
-            break;
-        case 3: //Ambient Light Source State - actively navigating outside cave
-            State = 3;
-            break;
-        case 4: //Cave Navigation State - actively navigating inside cave
-            State = 4;
-            break;
-        case 5: //Failed State - occurs when something goes wrong during the process
-            State = 5;
-            break;
-        default: //Inert State - start robot
-            State = 0;
-            Inert_State();
-            break;
-    }
+    
 }
 
 //This function is the thread dedicated to operating actuactors
@@ -117,7 +97,24 @@ void* actuactors_work(void* arg)
    while (1) {
         if (trigger_threads) {
             pthread_mutex_lock(&print_mutex);
-            printf("Thread 1 (Actuators) received message: Multithreading Testing\n");
+            printf("Thread 1 (Actuators) active! working with what we got!\n");
+            while( MotorCall > 0){
+                switch(MotorCall)
+                {
+                    case 1:
+                        Brush();
+                    case 2:
+                        Step();
+                    case 3:
+                        Screw();
+                    case 4:
+                        Loader_Raise();
+                    case 5:
+                        Loader_Lower();
+                    default:
+                        break;
+                }
+            }
             pthread_mutex_unlock(&print_mutex);
             break;  // Exit after printing the message
         }
@@ -159,62 +156,39 @@ void * data_work(void * arg)
      while (1) {
         if (trigger_threads) {
             pthread_mutex_lock(&print_mutex);
-            printf("Thread 4 (Data) received message: Multithreading Testing\n");
+            printf("Thread 4 (Data) active! Working on assigned tasks!\n");
+            while(1){
+                //These two functions should write and then read from uart to give feedback on raspberry pi commands and arduino commands
+                uart_direction_Write();
+                uart_read();
+                switch(State)
+                {
+                    //This is the actual states of the robot!
+                    case 1: //Calibration State - sensor polling test, motor check. This is mostly for our arduino!
+                        break;
+                    case 2: //Signal LED State - wait LED signal
+                        State = 2;
+                        break;
+                    case 3: //Ambient Light Source State - actively navigating outside cave
+                        State = 3;
+                        break;
+                    case 4: //Cave Navigation State - actively navigating inside cave
+                        State = 4;
+                        break;
+                    case 5: //Failed State - occurs when something goes wrong during the process
+                        State = 5;
+                        break;
+                    default: //Inert State - start robot
+                        State = 0;
+                        Inert_State();
+                        break;
+                }
+            }
             pthread_mutex_unlock(&print_mutex);
             break;  // Exit after printing the message
         }
     }
     return NULL;
-}
-
-int setup_uart() {
-    int uart_fd = open(UART_PORT, O_RDWR | O_NOCTTY | O_NDELAY);
-    if (uart_fd == -1) {
-        perror("Failed to open UART");
-        return -1;
-    }
-    
-    struct termios options;
-    tcgetattr(uart_fd, &options);
-    cfsetispeed(&options, BAUDRATE);
-    cfsetospeed(&options, BAUDRATE);
-    options.c_cflag = CS8 | CLOCAL | CREAD;
-    options.c_iflag = IGNPAR;
-    options.c_oflag = 0;
-    options.c_lflag = 0;
-    options.c_cc[VMIN] = 1;
-    options.c_cc[VTIME] = 10;
-    tcflush(uart_fd, TCIFLUSH);
-    tcsetattr(uart_fd, TCSANOW, &options);
-    return uart_fd;
-}
-
-void send_data(int uart_fd, const char *data) {
-    if (uart_fd != -1) {
-        int count = write(uart_fd, data, strlen(data));
-        if (count < 0) {
-            perror("UART TX error");
-        } else {
-            printf("Sent: %s\n", data);
-        }
-    } else {
-        printf("UART port not open.\n");
-    }
-}
-
-void receive_data(int uart_fd) {
-    if (uart_fd != -1) {
-        char buffer[256];
-        int length = read(uart_fd, buffer, sizeof(buffer) - 1);
-        if (length < 0) {
-            perror("UART RX error");
-        } else {
-            buffer[length] = '\0';
-            printf("Received: %s\n", buffer);
-        }
-    } else {
-        printf("UART port not open.\n");
-    }
 }
 
 int main(void){
