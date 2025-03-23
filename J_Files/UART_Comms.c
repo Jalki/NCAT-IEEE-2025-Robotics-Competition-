@@ -19,6 +19,11 @@ char newaccel[256];
 
 char buffer[256];
 
+//Level 1 functions
+int movexy(double target_x, double target_y);
+int rotate(double angle);
+
+
 // Function to configure UART
 void configure_uart(int uart_fd) {
     struct termios options;
@@ -103,3 +108,67 @@ int main() {
     close(uart_fd);
     return 0;
 }
+
+
+
+//Contributions by Arnold
+// New function: movexy()
+// Moves the robot to the given target coordinates (in inches relative to the playable area)
+// and, if successful, retrieves the delta values and processes them per axis.
+int movexy(double target_x, double target_y) {
+    // Call moverobotxy() to attempt to move the robot to the target (inches).
+    int result = moverobotxy(target_x, target_y);
+    if (result) {
+        // Retrieve the movement delta values and primary axis.
+        double *mvDeltas = getdeltas();  // mvDeltas[0] = dx, [1] = dy, [2] = primary axis (stored as ASCII)
+        double dx = mvDeltas[0];
+        double dy = mvDeltas[1];
+        char primary = (char) mvDeltas[2];
+        printf("movexy: Movement succeeded. dx = %.2f in, dy = %.2f in, primary axis = %c\n", 
+               dx, dy, primary);
+        
+        // Check the primary axis and execute code accordingly.
+        if (primary == 'x') {
+            // Code branch for primary x-axis movement.
+            printf("movexy: Primary axis is X. [Insert x-axis processing code here]\n");//PARTICULARLY, UART
+        }
+        else if (primary == 'y') {
+            // Code branch for primary y-axis movement.
+            printf("movexy: Primary axis is Y. [Insert y-axis processing code here]\n");//PARTICULARLY, UART
+        }
+        else {
+            printf("movexy: Unrecognized primary axis '%c'.\n", primary);
+        }
+    }
+    else {
+        printf("movexy: Movement to target (%.2f, %.2f) failed.\n", target_x, target_y);
+    }
+    return result;
+}
+
+
+// New function: rotate()
+// Rotates the robot by the given angle (in degrees) and then retrieves the rotation delta.
+// It returns 1 if rotation succeeded, or 0 if it failed.
+int rotate(double angle) {
+
+    // Check if rotation is allowed while doing rotation
+    if (!rotaterobot((int)angle)) {
+        printf("rotate: Rotation failed. Not enough clearance, or incorrect arguments [multiple of 90]\n");
+        return 0;
+    }
+    
+
+
+    // Retrieve the rotation delta.
+    double aDelta = getangledelta();
+    printf("rotate: Rotation succeeded. Angle delta: %.2f degrees.\n", aDelta);
+
+    // Process the angle delta if nonzero.
+    if (aDelta != 0.0) {
+        // [Insert any additional angle delta processing code here.]//PARTICULARLY, UART
+        printf("rotate: Processing angle delta: %.2f degrees.\n", aDelta);
+    }
+    return 1;
+}
+
