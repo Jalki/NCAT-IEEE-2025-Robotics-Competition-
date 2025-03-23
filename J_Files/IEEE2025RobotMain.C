@@ -35,7 +35,8 @@ void* data_work(void* arg);
 //The usleep() function in C suspends execution of the calling thread for the number of microseconds specified in its argument. 
 //It's part of the unistd.h header and is used for introducing short delays in a program's execution.
 
-// Signal handler to catch CTRL+C and stop threads void handle_sigint(int sig) {
+// Signal handler to catch CTRL+C and stop threads 
+void handle_sigint(int sig) {
     printf("\nTerminating program...\n");
     running = 0;
 }
