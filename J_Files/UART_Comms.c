@@ -105,10 +105,10 @@ int main() {
         return -1;
     }
     configure_uart(uart_fd);
-    
+    runEdgeCaseTests();
     while (1) {
-        uart_read(uart_fd);
-        uart_direction_Write(uart_fd, x, y, rotation);
+       // uart_read(uart_fd);
+       //uart_direction_Write(uart_fd, x, y, rotation);
         sleep(1);
     }
 
