@@ -67,24 +67,7 @@ void loop() {
 
   //void waitForSwitch(): waits until SW1 on top PCB is flipped. Use to prevent robot from running while programming.
 
-  while(1)
-  {
-    Serial.print("Forward: ");
-    Serial.println(obstacleFront());
-    delay(250);
-  
-    Serial.print("Left: ");
-    Serial.println(obstacleLeft());
-    delay(250);
-      
-    Serial.print("Right: ");
-    Serial.println(obstacleRight());
-    delay(250);
-    Serial.println(frontSonar.ping_cm());
-  
-    delay(250);
-  }
-  
+ 
   
   waitForSwitch();
   lowerLoader();
