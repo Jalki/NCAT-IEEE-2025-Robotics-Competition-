@@ -15,6 +15,11 @@
 #define BAUDRATE B9600
 
 #include "UART_Comms.c" // Raspberry Pi Script to send and upload UART data for x, y, and rotation data!
+/*Top level functions from this code
+movexy(x,y)
+aligncave()
+rotate(double angle)
+*/
 #include "RaspberryPiLoaders.C" // Raspberry Pi Loaders Script to control the loaders!
 
 // Hey! Yeah You! If you are reading this and wondering, what the from this code, outside the comments littered here, the IMPORTANTREADTHIS.txt file explains everything!
@@ -24,10 +29,33 @@ int user;
 int uart_fd = -1;  // Global UART file descriptor
 int running = 1;    // Global flag to control thread execution
 
+
 pthread_mutex_t print_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t motor_mutex = PTHREAD_MUTEX_INITIALIZER;
 int trigger_threads = 0;
 int MotorCall = 0;
+
+#include <stdio.h>
+
+// Define a structure for a coordinate pair
+typedef struct {
+    double x;
+    double y;
+} Coordinate;
+
+// Define an array of preset coordinate pairs in the specified order
+Coordinate common[] = {//usage:    movexy(common[idx].x, common[idx].y);
+    {86.5, 7.5},//below upper stud[0]
+    {86.5, 37.0},//above lower stud[1]
+    {83.0, 6.0},//left upper stud[2]
+    {83.0, 38.5},//left lower stud[3]
+    {68.0, 6.0},//upper left corner in cave[4]
+    {68.0, 38.5},//lower left corner[5]
+    {48.5, 6.0},//upper right corner out cave[6]
+    {42.0, 38.0},//left 'G' box[7]
+    {48.5, 32.0}//above 'G' box[8]
+};
+
 
 void Inert_State();
 void* actuators_work(void* arg);
