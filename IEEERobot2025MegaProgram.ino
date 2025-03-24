@@ -1,5 +1,13 @@
 #include <Wire.h>
 
+#include <NewPing.h>
+
+#define TRIGGER_PIN 39
+#define ECHO_PIN1 37
+#define ECHO_PIN2 35
+#define ECHO_PIN3 33
+#define MAX_DISTANCE 200
+
 int num1 = 0;
 #define interruptPin 2
 #define loaderRaise 43
@@ -7,14 +15,19 @@ int num1 = 0;
 #define brush 49
 #define screw 45
 #define stepMotor 47
+#define SW1 25
 
 #define loaderDelay 7500
+
+NewPing frontSonar(TRIGGER_PIN, ECHO_PIN1, MAX_DISTANCE);
+NewPing rightSonar(TRIGGER_PIN, ECHO_PIN2, MAX_DISTANCE);
+NewPing leftSonar(TRIGGER_PIN, ECHO_PIN3, MAX_DISTANCE);
 
 int instructionArray[] = {0, 1, 2, 3, 4, 9, 10};
 int testDataArray[] = {0, 10000, 10000, 10000, 10000, 800, 800};
 void setup() {
   // put your setup code here, to run once:
-  
+
   pinMode(interruptPin, OUTPUT);
   pinMode(loaderLower, OUTPUT);
   pinMode(loaderRaise, OUTPUT);
@@ -24,6 +37,7 @@ void setup() {
   Serial.begin(1000000);
   Wire.begin(20);
   delay(500);
+
 
 }
 
@@ -46,8 +60,33 @@ void loop() {
   //void startBrush(), void stopBrush(): starts/stops brush on loader
   //void startStep(), void stopStep(): starts/stops step motor in sorter
   //void startScrew(), void stopScrew(): starts/stops screw motor in sorter
-          
 
+  //int obstacleFront(): returns distance in cm to obstacle in front of the front ultrasonic sensor
+  //int obstacleLeft(): returns distance in cm to obstacle in front of the left ultrasonic sensor
+  //int obstacleRight(): returns distance in cm to obstacle in front of the right ultrasonic sensor
+
+  //void waitForSwitch(): waits until SW1 on top PCB is flipped. Use to prevent robot from running while programming.
+
+  while(1)
+  {
+    Serial.print("Forward: ");
+    Serial.println(obstacleFront());
+    delay(250);
+  
+    Serial.print("Left: ");
+    Serial.println(obstacleLeft());
+    delay(250);
+      
+    Serial.print("Right: ");
+    Serial.println(obstacleRight());
+    delay(250);
+    Serial.println(frontSonar.ping_cm());
+  
+    delay(250);
+  }
+  
+  
+  waitForSwitch();
   lowerLoader();
   startBrush();
   moveForward(500);
@@ -75,7 +114,7 @@ void  moveForward(int distance)
   Wire.beginTransmission(21);
   Wire.write(1);
   Wire.write((distance & 0xFF00) / 256 );
-  Wire.write(distance & 0x00FF); 
+  Wire.write(distance & 0x00FF);
   Wire.endTransmission();
 }
 void moveBackward(int distance)
@@ -83,7 +122,7 @@ void moveBackward(int distance)
   Wire.beginTransmission(21);
   Wire.write(2);
   Wire.write((distance & 0xFF00) / 256 );
-  Wire.write(distance & 0x00FF); 
+  Wire.write(distance & 0x00FF);
   Wire.endTransmission();
 }
 void stopMovement()
@@ -93,14 +132,14 @@ void stopMovement()
   Wire.write(1);
   Wire.write(1);
   Wire.endTransmission();
-  
+
 }
 void moveRight(int distance)
 {
   Wire.beginTransmission(21);
   Wire.write(4);
   Wire.write((distance & 0xFF00) / 256 );
-  Wire.write(distance & 0x00FF); 
+  Wire.write(distance & 0x00FF);
   Wire.endTransmission();
 }
 
@@ -109,7 +148,7 @@ void moveLeft(int distance)
   Wire.beginTransmission(21);
   Wire.write(3);
   Wire.write((distance & 0xFF00) / 256 );
-  Wire.write(distance & 0x00FF); 
+  Wire.write(distance & 0x00FF);
   Wire.endTransmission();
 }
 
@@ -162,7 +201,7 @@ void rotateClockwise(int angle)
   Wire.beginTransmission(21);
   Wire.write(9);
   Wire.write((angle & 0xFF00) / 256 );
-  Wire.write(angle & 0x00FF); 
+  Wire.write(angle & 0x00FF);
   Wire.endTransmission();
 }
 
@@ -171,6 +210,29 @@ void rotateCounterClockwise(int angle)
   Wire.beginTransmission(21);
   Wire.write(10);
   Wire.write((angle & 0xFF00) / 256 );
-  Wire.write(angle & 0x00FF); 
+  Wire.write(angle & 0x00FF);
   Wire.endTransmission();
+}
+
+int obstacleFront()
+{
+  return (frontSonar.ping_cm());
+}
+
+int obstacleLeft()
+{
+  return (leftSonar.ping_cm());
+}
+
+int obstacleRight()
+{
+  return (rightSonar.ping_cm());
+}
+
+void waitForSwitch()
+{
+  while (digitalRead(SW1) == HIGH)
+  {
+    delay(10);
+  }
 }
