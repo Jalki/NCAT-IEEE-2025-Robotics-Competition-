@@ -16,6 +16,8 @@
 #include "UART_Comms.C" // Raspberry Pi Script to send and upload UART data for x, y, and rotation data!
 #include "RaspberryPiLoaders.C" // Raspberry Pi Loaders Script to control the loaders!
 
+// Hey! Yeah You! If you are reading this and wondering, what the from this code, outside the comments littered here, the IMPORTANTREADTHIS.txt file explains everything!
+
 int State = 0;
 int user;
 int uart_fd = -1;  // Global UART file descriptor
@@ -82,24 +84,28 @@ void* actuators_work(void* arg) {
             pthread_mutex_lock(&print_mutex);
             printf("Thread 1 (Actuators) active! Working with what we got!\n");
             pthread_mutex_unlock(&print_mutex);
+
             while (MotorCall > 0 && running) {
                 pthread_mutex_lock(&motor_mutex);
                 switch (MotorCall) {
                     case 1: 
-                        Brush(); 
-                        break;
+                        BrushOn(); 
+                        break;  // Turn on Brush motor
                     case 2: 
-                        Step(); 
-                        break;
+                        StepOn(); 
+                        break;   // Turn on Step motor
                     case 3: 
-                        Screw(); 
-                        break;
+                        ScrewOn(); 
+                        break;  // Turn on Screw motor
                     case 4: 
-                        Loader_Raise(); 
-                        break;
+                        LoadRaiseOn(); 
+                        break; // Turn on Loader Raise
                     case 5: 
-                        Loader_Lower(); 
-                        break;
+                        LoadLowOn(); 
+                        break;   // Turn on Loader Lower
+                    case 0: 
+                        TurnOffMotors(); 
+                        break; // Turn off all motors
                     default: 
                         break;
                 }
@@ -224,6 +230,19 @@ void* camera_work(void* arg) {
     return NULL;
 }
 
+//This function is the thread dedicated to operating sensors
+void* sensors_work(void* arg)
+{
+    while (1) {
+        if (trigger_threads) {
+            pthread_mutex_lock(&print_mutex);
+            printf("Thread 2 (Sensors) received message: Multithreading Testing\n");
+            pthread_mutex_unlock(&print_mutex);
+            break;  // Exit after printing the message
+        }
+    }
+    return NULL;
+}
 
 // Main function to initialize UART, create threads, and manage execution
 int main(void) {

@@ -9,3 +9,113 @@ It returns 0 on success and -1 on error.
 While usleep() is still widely available, it has been marked as obsolete by POSIX. 
 The recommended alternative is nanosleep(), which provides finer-grained control over sleep duration. 
 However, usleep() remains useful for simpler cases where microsecond-level precision is sufficient.
+
+Mutexes (short for "mutual exclusion") are used in multithreaded programming to ensure that only one thread can access a shared resource (like a variable, data structure, or hardware resource) at a time. This prevents race conditions, where multiple threads try to modify or read the same resource simultaneously, leading to unpredictable or incorrect behavior.
+
+In our C script, we are using mutexes to protect shared variables and resources across multiple threads. Let’s break down how and why we are using mutexes in our code:
+Key Concepts of Mutexes
+
+    Locking a Mutex:
+
+        When a thread locks a mutex, it gains exclusive access to the shared resource.
+
+        If another thread tries to lock the same mutex, it will block (wait) until the mutex is unlocked.
+
+    Unlocking a Mutex:
+
+        When a thread unlocks a mutex, it releases its exclusive access, allowing other threads to lock it.
+
+    Critical Section:
+
+        The block of code that accesses the shared resource is called the critical section.
+
+        Only one thread should execute the critical section at a time.
+
+1. print_mutex
+
+You use print_mutex to ensure that only one thread can print to the console at a time. 
+This prevents interleaved or garbled output when multiple threads try to print simultaneously.
+
+    Why?:
+
+        Without the mutex, if multiple threads call printf at the same time, their outputs might overlap, making the logs unreadable.
+
+        The mutex ensures that only one thread can print at a time.
+2. motor_mutex
+
+You use motor_mutex to protect the MotorCall variable, which controls motor operations. 
+This ensures that only one thread can modify or read MotorCall at a time.
+
+    Why?:
+
+        Without the mutex, multiple threads might try to set MotorCall simultaneously, leading to inconsistent or incorrect motor behavior.
+
+        The mutex ensures that only one thread can modify MotorCall at a time, preventing race conditions.
+
+When to Use Mutexes
+
+You should use a mutex whenever:
+
+    Shared Resources: Multiple threads access or modify the same variable, data structure, or hardware resource.
+
+    Critical Sections: A block of code must be executed by only one thread at a time.
+
+In your code:
+
+    MotorCall is a shared variable accessed by multiple threads (e.g., actuators_work and data_work).
+
+    printf is a shared resource (the console) accessed by multiple threads.
+
+Potential Issues with Mutexes
+
+    Deadlocks:
+
+        If two threads lock multiple mutexes in different orders, they can deadlock (each waiting for the other to release a mutex).
+
+        Example:
+        c
+        Copy
+
+        // Thread 1
+        pthread_mutex_lock(&mutexA);
+        pthread_mutex_lock(&mutexB);
+
+        // Thread 2
+        pthread_mutex_lock(&mutexB);
+        pthread_mutex_lock(&mutexA);
+
+        Solution: Always lock mutexes in the same order.
+
+    Performance Overhead:
+
+        Locking and unlocking mutexes introduces some overhead.
+
+        Solution: Minimize the time spent in critical sections.
+
+    Forgotten Unlocks:
+
+        If a thread locks a mutex but forgets to unlock it, other threads will block indefinitely.
+
+        Solution: Always unlock mutexes, even in error conditions (use pthread_cleanup_push and pthread_cleanup_pop if necessary).
+
+Best Practices
+
+    Minimize Critical Sections:
+
+        Keep the code inside a mutex-protected block as short as possible to reduce contention.
+
+    Use Consistent Locking Order:
+
+        Always lock mutexes in the same order to avoid deadlocks.
+
+    Check Return Values:
+
+        Always check the return value of pthread_mutex_lock and pthread_mutex_unlock for errors.
+
+    Avoid Nested Mutexes:
+
+        If possible, avoid locking multiple mutexes in the same thread.
+
+    Use Higher-Level Constructs:
+
+        Consider using higher-level synchronization constructs like condition variables or semaphores if they better fit your use case.
