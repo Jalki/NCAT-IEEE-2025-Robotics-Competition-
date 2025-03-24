@@ -106,7 +106,8 @@ int main() {
         return -1;
     }
     configure_uart(uart_fd);
-    movexy(42.00, 38.00);
+    movexy(30.00, 22.50);
+    rotate(90.0);
     //runEdgeCaseTests();
     
 
@@ -138,15 +139,11 @@ int movexy(double target_x, double target_y) {
             printf("movexy: Primary axis is X. [Insert x-axis processing code here]\n");//PARTICULARLY, UART
 
             uart_direction_Write(uart_fd, dx, 0.00, 0.00);
-
-            printf("entering while loop");
-            while (strcmp(uart_read(uart_fd), "Complete") != 0) {
-                printf("test\n");
+            char *data;
+            do {
+                data = uart_read(uart_fd);  // Read into the global buffer and get its pointer
                 sleep(1);
-            }
-
-
-            printf("sending second set");
+            } while(strcmp(data, "Complete") == 0);  // Check the first character in the buffer
             
             uart_direction_Write(uart_fd, 0.00, dy, 0.00);
         }
@@ -155,14 +152,12 @@ int movexy(double target_x, double target_y) {
             printf("movexy: Primary axis is Y. [Insert y-axis processing code here]\n");//PARTICULARLY, UART
 
             uart_direction_Write(uart_fd, 0, dy, 0);
-            printf("entering while loop pt2");
-            while (strcmp(uart_read(uart_fd), "Complete") != 0) {
-                printf("test\n");
+            char *data;
+            do {
+                data = uart_read(uart_fd);  // Read into the global buffer and get its pointer
                 sleep(1);
-            }
-
-
-            printf("sending second set");
+            } while(strcmp(data, "Complete") == 0);  // Check the first character in the buffer
+            
             uart_direction_Write(uart_fd, dx, 0, 0);
 
 
