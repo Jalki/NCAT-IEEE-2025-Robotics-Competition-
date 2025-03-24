@@ -18,6 +18,7 @@ char accel[256];
 char newaccel[256];
 
 char buffer[256];
+int uart_fd = -1;  // Global UART file descriptor
 
 //Level 1 functions
 int movexy(double target_x, double target_y);
@@ -96,9 +97,6 @@ void uart_read(int fd) {
 
 int main() {
     initalizemovement();
-
-    
-
     while (1) {
         uart_read(uart_fd);
         uart_direction_Write(uart_fd, x, y, rotation);
