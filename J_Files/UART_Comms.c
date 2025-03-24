@@ -97,19 +97,15 @@ void uart_read(int fd) {
 
 int main() {
     initalizemovement();
+    
     // Open UART connection
     uart_fd = open(UART_PORT, O_RDWR | O_NOCTTY);
     if (uart_fd == -1) {
         perror("Unable to open UART");
         return -1;
     }
-
-    // Configure UART
-    if (configure_uart(uart_fd) < 0) {
-        perror("Failed to configure UART");
-        close(uart_fd);
-        return -1;
-    }
+    configure_uart(uart_fd);
+    
     while (1) {
         uart_read(uart_fd);
         uart_direction_Write(uart_fd, x, y, rotation);
