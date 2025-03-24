@@ -139,11 +139,15 @@ int movexy(double target_x, double target_y) {
             printf("movexy: Primary axis is X. [Insert x-axis processing code here]\n");//PARTICULARLY, UART
 
             uart_direction_Write(uart_fd, dx, 0.00, 0.00);
-            char *data;
-            do {
-                data = uart_read(uart_fd);  // Read into the global buffer and get its pointer
+
+            printf("entering while loop");
+            while (strcmp(uart_read(uart_fd), "Complete") != 0) {
+                printf("test\n");
                 sleep(1);
-            } while(strcmp(data, "Complete") == 0);  // Check the first character in the buffer
+            }
+
+
+            printf("sending second set");
             
             uart_direction_Write(uart_fd, 0.00, dy, 0.00);
         }
@@ -152,12 +156,14 @@ int movexy(double target_x, double target_y) {
             printf("movexy: Primary axis is Y. [Insert y-axis processing code here]\n");//PARTICULARLY, UART
 
             uart_direction_Write(uart_fd, 0, dy, 0);
-            char *data;
-            do {
-                data = uart_read(uart_fd);  // Read into the global buffer and get its pointer
+            printf("entering while loop pt2");
+            while (strcmp(uart_read(uart_fd), "Complete") != 0) {
+                printf("test\n");
                 sleep(1);
-            } while(strcmp(data, "Complete") == 0);  // Check the first character in the buffer
-            
+            }
+
+
+            printf("sending second set");
             uart_direction_Write(uart_fd, dx, 0, 0);
 
 
@@ -171,6 +177,69 @@ int movexy(double target_x, double target_y) {
     }
     return result;
 }
+
+
+
+
+
+//Parallel function implementation for alignycave
+int aligncave() {
+    // Call moverobotxy() to attempt to move the robot to the target (inches).
+    int result = alignYcave();
+    if (result) {
+        // Retrieve the movement delta values and primary axis.
+        double *mvDeltas = getdeltas();  // mvDeltas[0] = dx, [1] = dy, [2] = primary axis (stored as ASCII)
+        double dx = mvDeltas[0];
+        double dy = mvDeltas[1];
+        char primary = (char) mvDeltas[2];
+        printf("movexy: Movement succeeded. dx = %.4f in, dy = %.4f in, primary axis = %c\n", 
+               dx, dy, primary);
+        
+        // Check the primary axis and execute code accordingly.
+        if (primary == 'x') {
+            // Code branch for primary x-axis movement.
+            printf("movexy: Primary axis is X. [Insert x-axis processing code here]\n");//PARTICULARLY, UART
+
+            uart_direction_Write(uart_fd, dx, 0.00, 0.00);
+
+            printf("entering while loop for align y");
+            while (strcmp(uart_read(uart_fd), "Complete") != 0) {
+                printf("test\n");
+                sleep(1);
+            }
+
+
+            printf("sending second set");
+            
+            uart_direction_Write(uart_fd, 0.00, dy, 0.00);
+        }
+        else if (primary == 'y') {
+            // Code branch for primary y-axis movement.
+            printf("movexy: Primary axis is Y. [Insert y-axis processing code here]\n");//PARTICULARLY, UART
+
+            uart_direction_Write(uart_fd, 0, dy, 0);
+            printf("entering while loop pt2");
+            while (strcmp(uart_read(uart_fd), "Complete") != 0) {
+                printf("test\n");
+                sleep(1);
+            }
+
+
+            printf("sending second set");
+            uart_direction_Write(uart_fd, dx, 0, 0);
+
+
+        }
+        else {
+            printf("movexy: Unrecognized primary axis '%c'.\n", primary);
+        }
+    }
+    else {
+        printf("movexy: Movement to target (%.2f, %.2f) failed.\n", target_x, target_y);
+    }
+    return result;
+}
+
 
 
 // New function: rotate()
