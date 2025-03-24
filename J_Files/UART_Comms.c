@@ -75,7 +75,7 @@ void uart_write_state(int fd, int State)
 }
 
 // Function to read data from UART
-void uart_read(int fd) {
+char* uart_read(int fd) {
     int index = 0;
     char ch;
 
@@ -89,10 +89,11 @@ void uart_read(int fd) {
             buffer[index++] = ch;
         } else if (n < 0) {
             perror("UART Read Error");
-            return;
+            return NULL;  // Return NULL on error
         }
     }
     printf("Received: %s\n", buffer);
+    return buffer;
 }
 
 int main() {
@@ -109,6 +110,9 @@ int main() {
     while (1) {
        // uart_read(uart_fd);
        //uart_direction_Write(uart_fd, x, y, rotation);
+
+       //UART READ AND WRITING HANDLED BY CALLING RESPECTIVE MOVE AND ROTATE FUNCTIONS
+       
         sleep(1);
     }
 
@@ -138,10 +142,30 @@ int movexy(double target_x, double target_y) {
         if (primary == 'x') {
             // Code branch for primary x-axis movement.
             printf("movexy: Primary axis is X. [Insert x-axis processing code here]\n");//PARTICULARLY, UART
+
+            uart_direction_Write(uart_fd, dx, 0, 0);
+            char *data;
+            do {
+                data = uart_read(uart_fd);  // Read into the global buffer and get its pointer
+                sleep(1);
+            } while(strcmp(data, "CODE") == 0);  // Check the first character in the buffer
+            
+            uart_direction_Write(uart_fd, 0, dy, 0);
         }
         else if (primary == 'y') {
             // Code branch for primary y-axis movement.
             printf("movexy: Primary axis is Y. [Insert y-axis processing code here]\n");//PARTICULARLY, UART
+
+            uart_direction_Write(uart_fd, 0, dy, 0);
+            char *data;
+            do {
+                data = uart_read(uart_fd);  // Read into the global buffer and get its pointer
+                sleep(1);
+            } while(strcmp(data, "CODE") == 0);  // Check the first character in the buffer
+            
+            uart_direction_Write(uart_fd, dx, 0, 0);
+
+
         }
         else {
             printf("movexy: Unrecognized primary axis '%c'.\n", primary);
@@ -175,6 +199,7 @@ int rotate(double angle) {
     if (aDelta != 0.0) {
         // [Insert any additional angle delta processing code here.]//PARTICULARLY, UART
         printf("rotate: Processing angle delta: %.2f degrees.\n", aDelta);
+        uart_direction_Write(uart_fd, 0, 0, aDelta);
     }
     return 1;
 }

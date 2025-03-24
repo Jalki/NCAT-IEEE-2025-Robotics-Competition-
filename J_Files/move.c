@@ -122,7 +122,18 @@ void runEdgeCaseTests(void) {
     // 1. Start: place the robot at some known location, e.g. near the top-left corner
     //    or the center of the field. For example:
     moverobotdirection('B', 0.5);
-    moverobotxy(20,22.5);// start with movement
+    printf("\n[TEST] Move left box.\n");
+    if (!moverobotxy(17,6)) {
+        printf("[ERROR] Could not get to left box.\n");
+    }
+
+    alignYcave();
+
+    printf("\n[TEST] Move right box.\n");
+    if (!moverobotxy(36,6)) {
+        printf("[ERROR] Could not get to right box.\n");
+    }
+
     //after a movement, a delta is recorded [a successful one]
 
 
@@ -221,13 +232,23 @@ void runEdgeCaseTests(void) {
     }
 
     printf("\n[TEST] LOWER STUD TEST\n");
-    if (!moverobotxy(86.5,37)) {
+    if (!moverobotxy(86.5,37.5)) {
         printf("[ERROR] Could not pass lower studs.\n");//PASS
     }
 
     printf("\n[TEST] UPPER STUD TEST\n");
     if (!moverobotxy(86.5,7.5)) {
         printf("[ERROR] Could not pass upper studs.\n");//PASS
+    }
+
+    printf("\n[TEST] LOWER STUD LATERAL TEST\n");
+    if (!moverobotxy(83, 38.5)) {
+        printf("[ERROR] Could not pass lowerL studs.\n");//PASS
+    }
+
+    printf("\n[TEST] UPPER STUD LATERAL TEST\n");
+    if (!moverobotxy(83, 6)) {
+        printf("[ERROR] Could not pass upperL studs.\n");//PASS
     }
 
     printf("y aligning...");
@@ -241,11 +262,21 @@ void runEdgeCaseTests(void) {
 
        printf("\n[TEST] UUNOCCUPIED G BOX\n");
     if (!moverobotxy(48.5,38.5)) {
-        printf("[ERROR] Could not to outside cave corner\n");//PASS
+        printf("[ERROR] Could not to G box\n");//PASS
+    }
+
+    printf("\n[TEST] LEFT G BOX\n");
+    if (!moverobotxy(42,38)) {
+        printf("[ERROR] Could not to L G box\n");//PASS
+    }
+
+    printf("\n[TEST] TOP G BOX\n");
+    if (!moverobotxy(48.5,32)) {
+        printf("[ERROR] Could not to T G box\n");//PASS
     }
 
     printf("\n[TEST] HOME TEST\n");
-    if (!moverobotxy(38.5,31)) {
+    if (!moverobotxy(31,38.5)) {
         printf("[ERROR] Could not go home\n");//PASS
     }
 
@@ -844,13 +875,13 @@ void setrobotposition(int new_row, int new_col) {//row = y, col= x
 // The top and bottom headers print an asterisk at the robot's column.
 // The left header prints an asterisk for the robot's row.
 void printsurroundingrows(void) {
-    int start_row = robot_row - ROTATION_CLEARANCE_CELLS;
-    int end_row = robot_row + ROTATION_CLEARANCE_CELLS;
+    int start_row = robot_row - ROTATION_CLEARANCE_CELLS-1;
+    int end_row = robot_row + ROTATION_CLEARANCE_CELLS+1;
     if (start_row < 0) start_row = 0;
     if (end_row >= EFFECTIVE_HEIGHT_CELLS) end_row = EFFECTIVE_HEIGHT_CELLS - 1;
 
-    int start_col = robot_col - ROTATION_CLEARANCE_CELLS;
-    int end_col = robot_col + ROTATION_CLEARANCE_CELLS;
+    int start_col = robot_col - ROTATION_CLEARANCE_CELLS-1;
+    int end_col = robot_col + ROTATION_CLEARANCE_CELLS+1;
     if (start_col < 0) start_col = 0;
     if (end_col >= EFFECTIVE_WIDTH_CELLS) end_col = EFFECTIVE_WIDTH_CELLS - 1;
 
@@ -1023,9 +1054,9 @@ void reconcile(double front_cm, double left_cm, double right_cm) {
 void initregions(void) {
     int i, j;
 	Nboxrow = 6;
-	Nboxcol = 47;
+	Nboxcol = 53;//fixed x distance
 	Gboxrow = 83;
-	Gboxcol = 102;
+	Gboxcol = 103;
 	//robot origin = x=~ 62, y=81
     // Region 1: from <0,0> to <24,17> = '4'
 	setrobotposition(80, 65);
@@ -1089,7 +1120,7 @@ void initregions(void) {
 	//boxes initalized <R,C>
 	
     grid[PO(Nboxrow)][PO(Nboxcol)] = 'N';
-   // grid[PO(Gboxrow)][PO(Gboxcol)] = 'G';
+    grid[PO(Gboxrow)][PO(Gboxcol)] = 'G';
     
     // Region 7: from <98,90> to <110,78> = 'G'
     // With y axis pointing downward, we interpret this as the region spanning
