@@ -119,3 +119,43 @@ Best Practices
     Use Higher-Level Constructs:
 
         Consider using higher-level synchronization constructs like condition variables or semaphores if they better fit your use case.
+
+Hey Jaleen:
+
+void* camera_work(void* arg) {
+    while (running) {
+        if (trigger_threads) {
+            pthread_mutex_lock(&print_mutex);
+            printf("Thread 3 (Camera) active! Detecting AprilTags...\n");
+            pthread_mutex_unlock(&print_mutex);
+
+            // Import your Python module
+            PyObject* pModule = PyImport_ImportModule("apriltag_detection");
+            if (pModule == NULL) {
+                PyErr_Print();
+                continue;
+            }
+
+            // Call a function from your Python module
+            PyObject* pFunc = PyObject_GetAttrString(pModule, "detect_apriltags");
+            if (pFunc && PyCallable_Check(pFunc)) {
+                PyObject* pResult = PyObject_CallObject(pFunc, NULL);
+                if (pResult != NULL) {
+                    // Process the result (e.g., parse AprilTag data)
+                    // You can use PyArg_ParseTuple to extract specific data
+                    Py_DECREF(pResult);
+                } else {
+                    PyErr_Print();
+                }
+            } else {
+                PyErr_Print();
+            }
+
+            // Clean up
+            Py_XDECREF(pFunc);
+            Py_DECREF(pModule);
+        }
+        usleep(100000);  // Sleep for 100ms to avoid busy-waiting
+    }
+    return NULL;
+}

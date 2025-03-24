@@ -48,9 +48,9 @@ void configure_uart(int uart_fd) {
 }
 
 // Function to send a float array as a comma-separated string
-void uart_direction_Write(int fd, float x, float y, float rotation) {
+void uart_direction_Write(int fd, double x, double y, double rotation) {
     char data[50];  // Buffer to hold formatted string
-    snprintf(data, sizeof(data), "%.2f,%.2f,%.2f\n", x, y, rotation);
+    snprintf(data, sizeof(data), "%.4f,%.4f,%.4f\n", x, y, rotation);
     
     int bytes_written = write(fd, data, strlen(data));
     if (bytes_written < 0) {
@@ -106,15 +106,9 @@ int main() {
         return -1;
     }
     configure_uart(uart_fd);
-    runEdgeCaseTests();
-    while (1) {
-       // uart_read(uart_fd);
-       //uart_direction_Write(uart_fd, x, y, rotation);
-
-       //UART READ AND WRITING HANDLED BY CALLING RESPECTIVE MOVE AND ROTATE FUNCTIONS
-       
-        sleep(1);
-    }
+    movexy(42.00, 38.00);
+    //runEdgeCaseTests();
+    
 
     close(uart_fd);
     return 0;
@@ -135,7 +129,7 @@ int movexy(double target_x, double target_y) {
         double dx = mvDeltas[0];
         double dy = mvDeltas[1];
         char primary = (char) mvDeltas[2];
-        printf("movexy: Movement succeeded. dx = %.2f in, dy = %.2f in, primary axis = %c\n", 
+        printf("movexy: Movement succeeded. dx = %.4f in, dy = %.4f in, primary axis = %c\n", 
                dx, dy, primary);
         
         // Check the primary axis and execute code accordingly.
@@ -143,14 +137,17 @@ int movexy(double target_x, double target_y) {
             // Code branch for primary x-axis movement.
             printf("movexy: Primary axis is X. [Insert x-axis processing code here]\n");//PARTICULARLY, UART
 
-            uart_direction_Write(uart_fd, dx, 0, 0);
+            uart_direction_Write(uart_fd, dx, 0.00, 0.00);
             char *data;
             do {
                 data = uart_read(uart_fd);  // Read into the global buffer and get its pointer
                 sleep(1);
-            } while(strcmp(data, "CODE") == 0);  // Check the first character in the buffer
+                printf("Got data");
+            } while(strcmp(data, "Complete") == 0);  // Check the first character in the buffer
+
+            while()
             
-            uart_direction_Write(uart_fd, 0, dy, 0);
+            uart_direction_Write(uart_fd, 0.00, dy, 0.00);
         }
         else if (primary == 'y') {
             // Code branch for primary y-axis movement.
@@ -161,7 +158,7 @@ int movexy(double target_x, double target_y) {
             do {
                 data = uart_read(uart_fd);  // Read into the global buffer and get its pointer
                 sleep(1);
-            } while(strcmp(data, "CODE") == 0);  // Check the first character in the buffer
+            } while(strcmp(data, "Complete") == 0);  // Check the first character in the buffer
             
             uart_direction_Write(uart_fd, dx, 0, 0);
 

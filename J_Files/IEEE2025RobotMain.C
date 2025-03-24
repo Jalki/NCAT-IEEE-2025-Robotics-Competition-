@@ -8,17 +8,18 @@
 #include <fcntl.h>
 #include <termios.h>
 #include <signal.h>
-#include <Python.h>
+//#include <Python.h>
+//#include </usr/include/python3.11.2/pyconfig-64.h>
 
 #define UART_PORT "/dev/ttyAMA0" // This is Serial 1 for the Arduino!
 #define BAUDRATE B9600
 
-#include "UART_Comms.C" // Raspberry Pi Script to send and upload UART data for x, y, and rotation data!
+#include "UART_Comms.c" // Raspberry Pi Script to send and upload UART data for x, y, and rotation data!
 #include "RaspberryPiLoaders.C" // Raspberry Pi Loaders Script to control the loaders!
 
 // Hey! Yeah You! If you are reading this and wondering, what the from this code, outside the comments littered here, the IMPORTANTREADTHIS.txt file explains everything!
 
-int State = 0;
+int State = 1;
 int user;
 int uart_fd = -1;  // Global UART file descriptor
 int running = 1;    // Global flag to control thread execution
@@ -130,25 +131,25 @@ void* data_work(void* arg) {
                     case 1: //Calibration State, motors are moved to check if they are working properly from the raspberry pi
                         pthread_mutex_lock(&motor_mutex);
                         MotorCall = 1; 
-                        usleep(300000);
+                        delay(3000);
                         MotorCall = 2; 
-                        usleep(300000);
+                        delay(3000);
                         MotorCall = 3; 
-                        usleep(300000);
+                        delay(3000);
                         MotorCall = 4; 
-                        usleep(300000);
+                        delay(3000);
                         MotorCall = 5; 
-                        usleep(400000);
+                        delay(3000);
                         pthread_mutex_unlock(&motor_mutex);
                         State = 2;
                         break;
                     case 2: //Start Signal State, awaiting for the arduino to be triggered by a photoresistor to tell if its alright for it to start!
-                        int Ard_Start;
-                        do {
-                            Ard_Start = uart_read(uart_fd);
-                        } while (!Ard_Start && running);
-                        State = (Ard_Start == 1) ? 3 : 7;
-                        break;
+                        //int Ard_Start;
+                        //do {
+                            //Ard_Start = uart_read(uart_fd);
+                        //} while (!Ard_Start && running);
+                        //State = (Ard_Start == 1) ? 3 : 7;
+                       // break;
                     case 3: //Outside of Cave State, the brush motor should always be active!
                         pthread_mutex_lock(&motor_mutex);
                         MotorCall = 1;
@@ -192,42 +193,11 @@ void* data_work(void* arg) {
     return NULL;
 }
 
-void* camera_work(void* arg) {
-    while (running) {
-        if (trigger_threads) {
-            pthread_mutex_lock(&print_mutex);
-            printf("Thread 3 (Camera) active! Detecting AprilTags...\n");
-            pthread_mutex_unlock(&print_mutex);
-
-            // Import your Python module
-            PyObject* pModule = PyImport_ImportModule("apriltag_detection");
-            if (pModule == NULL) {
-                PyErr_Print();
-                continue;
-            }
-
-            // Call a function from your Python module
-            PyObject* pFunc = PyObject_GetAttrString(pModule, "detect_apriltags");
-            if (pFunc && PyCallable_Check(pFunc)) {
-                PyObject* pResult = PyObject_CallObject(pFunc, NULL);
-                if (pResult != NULL) {
-                    // Process the result (e.g., parse AprilTag data)
-                    // You can use PyArg_ParseTuple to extract specific data
-                    Py_DECREF(pResult);
-                } else {
-                    PyErr_Print();
-                }
-            } else {
-                PyErr_Print();
-            }
-
-            // Clean up
-            Py_XDECREF(pFunc);
-            Py_DECREF(pModule);
-        }
-        usleep(100000);  // Sleep for 100ms to avoid busy-waiting
-    }
-    return NULL;
+void* camera_work(void* arg){
+    pthread_mutex_lock(&print_mutex);
+    printf("Thread 3 (Camera) active! Detecting AprilTags...\n");
+    pthread_mutex_unlock(&print_mutex);
+    return 0;
 }
 
 //This function is the thread dedicated to operating sensors
@@ -248,24 +218,16 @@ void* sensors_work(void* arg)
 int main(void) {
     signal(SIGINT, handle_sigint); // Catch SIGINT (CTRL+C) to exit cleanly
     // Initialize the Python interpreter
-    Py_Initialize();
-
-    // Open UART connection
-    uart_fd = open(UART_PORT, O_RDWR | O_NOCTTY);
-    if (uart_fd == -1) {
-        perror("Unable to open UART");
-        return -1;
+    if (wiringPiSetupGpio() == -1) { // Use BCM pin numbering
+        printf("WiringPi setup failed!\n");
+        return 1;
     }
-
-    // Configure UART
-    if (configure_uart(uart_fd) < 0) {
-        perror("Failed to configure UART");
-        close(uart_fd);
-        return -1;
-    }
+    //Py_Initialize();
 
     // Create threads
     pthread_t thrd_1, thrd_2, thrd_3, thrd_4;
+    trigger_threads = 1;  // Ensure threads are triggered to run
+
 
     if (pthread_create(&thrd_1, NULL, actuators_work, NULL) != 0) {
         perror("pthread_create for thread 1 failed");
@@ -290,7 +252,7 @@ int main(void) {
     close(uart_fd);
     printf("Program exited cleanly.\n");
     // Finalize the Python interpreter before exiting
-    Py_Finalize();
+    //Py_Finalize();
 
     return 0;
 }

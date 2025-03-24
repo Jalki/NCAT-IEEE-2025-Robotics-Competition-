@@ -140,7 +140,7 @@ void TurnOffMotors() {
     printf("All motors turned OFF\n");
 }
 
-int main(void)
+int load(void)
 {
     if (wiringPiSetupGpio() == -1) { // Use BCM pin numbering
         printf("WiringPi setup failed!\n");
@@ -153,6 +153,10 @@ int main(void)
     BrushOn();  // Turn on Brush motor
     sleep(5);   // Keep it on for 5 seconds
     TurnOffMotors(); // Turn off all motors
+
+    ScrewOn();
+    sleep(5);
+    TurnOffMotors();
 
     StepOn();   // Turn on Step motor
     sleep(3);   // Keep it on for 3 seconds
