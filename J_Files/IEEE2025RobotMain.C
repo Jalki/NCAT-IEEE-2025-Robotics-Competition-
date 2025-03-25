@@ -38,7 +38,7 @@ pthread_mutex_t print_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t motor_mutex = PTHREAD_MUTEX_INITIALIZER;
 int trigger_threads = 0;
 int MotorCall = 0;
-
+int countBall = 0;
 #include <stdio.h>
 
 // Define a structure for a coordinate pair
@@ -86,7 +86,7 @@ void unloadSortBins();
 void prepCave();
 void caveSweep();
 void goHome();
-
+int balldetect(const char *filename, int *last_count);
 
 
 //The usleep() function in C suspends execution of the calling thread for the number of microseconds specified in its argument. 
@@ -319,58 +319,28 @@ void* data_work(void* arg) {
 
 //this doesnt really need mutexes but a way to silence the output
 void* camera_work(void* arg) {
-    // Initialize the Python interpreter once.
+    // Initialize the Python interpreter.
     Py_Initialize();
-    // (Optional) Initialize thread support for Python if not already done.
-    // PyEval_InitThreads();
-    
-    // Set up sys.path to include your module directory and silence output.
-    PyRun_SimpleString("import sys; sys.path.append('/home/arnold/Documents/GitHub/NCAT-IEEE-2025-Robotics-Competition-/J_Files')");
-  //  PyRun_SimpleString("import sys, os; sys.stdout = open(os.devnull, 'w'); sys.stderr = open(os.devnull, 'w')");//silences output
 
-    // Import the module "cmm".
-    PyObject *pName = PyUnicode_FromString("cmm");
-    PyObject *pModule = PyImport_Import(pName);
-    Py_DECREF(pName);
-
-    if (pModule == NULL) {
-        PyErr_Print();
-        fprintf(stderr, "Failed to load \"cmm.py\"\n");
+    // Open the Python script file.
+    const char *script_path = "/home/arnold/Documents/GitHub/NCAT-IEEE-2025-Robotics-Competition-/J_Files/cmm.py";
+    PyRun_SimpleString("import sys, os; sys.stdout = open(os.devnull, 'w'); sys.stderr = open(os.devnull, 'w')");//silences output
+    FILE *fp = fopen(script_path, "r");
+    if (fp == NULL) {
+        fprintf(stderr, "Failed to open %s\n", script_path);
         Py_Finalize();
         return NULL;
     }
 
-    // Continuously monitor the global variable in the module.
-    while (running) {
-        // Acquire the GIL before calling Python APIs.
-        PyGILState_STATE gstate = PyGILState_Ensure();
+    // Run the Python script.
+    PyRun_SimpleFile(fp, "cmm.py");
+    fclose(fp);
 
-        // Get the module's globals dictionary.
-        PyObject *pDict = PyModule_GetDict(pModule);
-
-        // Retrieve the global variable "areThereBalls".
-        PyObject *pValue = PyDict_GetItemString(pDict, "areThereBalls");
-        if (pValue && PyLong_Check(pValue)) {
-            long myValue = PyLong_AsLong(pValue);
-            printf("Global variable 'areThereBalls' value: %ld\n", myValue);
-        } else {
-            printf("Global variable 'areThereBalls' not found or not an integer.\n");
-        }
-
-        // Release the GIL.
-        PyGILState_Release(gstate);
-        // Wait before checking again.
-        sleep(1);
-    }
-
-    // Cleanup when done.
-    Py_DECREF(pModule);
+    // Finalize the Python interpreter.
     Py_Finalize();
 
     return NULL;
 }
-
-
 //This function is the thread dedicated to operating sensors
 void* sensors_work(void* arg)
 {
@@ -378,6 +348,9 @@ void* sensors_work(void* arg)
         if (trigger_threads) {
             pthread_mutex_lock(&print_mutex);
             printf("Thread 2 (Sensors) received message: Multithreading Testing\n");
+            if (balldetect("ballexist", &countBall))
+            {printf("ball detected");}
+            else { printf("no ball");}
             pthread_mutex_unlock(&print_mutex);
             //break;  // Exit after printing the message
             sleep(1);
@@ -385,7 +358,37 @@ void* sensors_work(void* arg)
     }
     return NULL;
 }
-
+int balldetect(const char *filename, int *last_count) {
+    FILE *f = fopen(filename, "r");
+    if (f == NULL) {
+        // File not found; create it with a default value of 0.
+        f = fopen(filename, "w");
+        if (f == NULL) {
+            perror("Error creating file");
+            return 0;
+        }
+        fprintf(f, "0");
+        fclose(f);
+        if (*last_count != 0) {
+            *last_count = 0;
+            return 1;
+        }
+        return 0;
+    }
+    
+    int current_value;
+    if (fscanf(f, "%d", &current_value) != 1) {
+        fclose(f);
+        return 0;  // Could not read a valid integer.
+    }
+    fclose(f);
+    
+    if (current_value != *last_count) {
+        *last_count = current_value;
+        return 1;  // The value changed.
+    }
+    return 0;
+}
 
 
 void waitForLight() {

@@ -5,7 +5,10 @@ import serial
 import apriltag
 from ultralytics import YOLO
 
-areThereBalls = False
+# Instead of using a global variable, initialize the file to indicate 0 ball detections.
+with open("ballexist", "w") as f:
+    f.write("0")
+
 # ----- Initialize Video Capture and Models -----
 cap = cv2.VideoCapture(0)
 
@@ -99,17 +102,25 @@ while True:
                 cls = int(box.cls[0])
                 class_name = classes_names[cls]
                 
-                # For class "ball", process only if its center lies within the center 50% of the screen.
+                # Process only if the detected object is a ball.
                 if class_name.lower() == "ball":
-                    
                     center_x = (x1 + x2) / 2
                     left_bound = frame_width * 0.25
                     right_bound = frame_width * 0.75
-                    if not (left_bound <= center_x <= right_bound):
-                        areThereBalls = False
-                        continue  # Skip drawing if ball is outside the center region
-                    
-                areThereBalls = True
+                    # Only increment the counter if the ball is in the center region.
+                    if left_bound <= center_x <= right_bound:
+                        try:
+                            with open("ballexist", "r") as f:
+                                current_count = int(f.read().strip())
+                        except:
+                            current_count = 0
+                        current_count += 1
+                        with open("ballexist", "w") as f:
+                            f.write(str(current_count))
+                    else:
+                        # If the ball is outside the center region, skip further processing for this box.
+                        continue
+
                 colour = getColours(cls)
                 cv2.rectangle(frame, (x1, y1), (x2, y2), colour, 2)
                 cv2.putText(frame, f'{class_name} {box.conf[0]:.2f}', (x1, y1),
