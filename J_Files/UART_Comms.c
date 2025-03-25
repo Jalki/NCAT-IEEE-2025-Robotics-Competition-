@@ -96,6 +96,7 @@ char* uart_read(int fd) {
     return buffer;
 }
 
+/* temporary silence main
 int main() {
     initalizemovement();
     
@@ -114,7 +115,7 @@ int main() {
     close(uart_fd);
     return 0;
 }
-
+*/
 
 
 //Contributions by Arnold
@@ -235,7 +236,7 @@ int aligncave() {
         }
     }
     else {
-        printf("movexy: Movement to target (%.2f, %.2f) failed.\n", target_x, target_y);
+        printf("aligncave: Alignment Y failed.\n");
     }
     return result;
 }

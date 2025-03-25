@@ -8,6 +8,10 @@
 #include <fcntl.h>
 #include <termios.h>
 #include <signal.h>
+#include <stdbool.h>
+#include <Python.h>
+
+
 //#include <Python.h>
 //#include </usr/include/python3.11.2/pyconfig-64.h>
 
@@ -26,7 +30,7 @@ rotate(double angle)
 
 int State = 1;
 int user;
-int uart_fd = -1;  // Global UART file descriptor
+//int uart_fd = -1;  // Global UART file descriptor does not need to be redefined--uart is being imported with such variables
 int running = 1;    // Global flag to control thread execution
 
 
@@ -42,6 +46,18 @@ typedef struct {
     double x;
     double y;
 } Coordinate;
+
+// Define the unique states in the sequence
+typedef enum {
+    WAIT_FOR_LIGHT,
+    OUTSIDE_SWEEP,
+    UNLOAD_SORT,
+    PREP_CAVE,
+    CAVE_SWEEP,
+    GO_HOME,
+    FINISHED
+} MState;
+
 
 // Define an array of preset coordinate pairs in the specified order
 Coordinate common[] = {//usage:    movexy(common[idx].x, common[idx].y);
@@ -62,6 +78,16 @@ void* actuators_work(void* arg);
 void* sensors_work(void* arg);
 void* camera_work(void* arg);
 void* data_work(void* arg);
+
+// Function prototypes for each action
+void waitForLight();
+void outsideSweep();
+void unloadSortBins();
+void prepCave();
+void caveSweep();
+void goHome();
+
+
 
 //The usleep() function in C suspends execution of the calling thread for the number of microseconds specified in its argument. 
 //It's part of the unistd.h header and is used for introducing short delays in a program's execution.
@@ -146,10 +172,79 @@ void* actuators_work(void* arg) {
     return NULL;
 }
 
+
+/*
+
+
+State currentState = WAIT_FOR_LIGHT;
+    // iteration == 0 indicates the first pass;
+    // iteration == 1 indicates the second pass through PREP_CAVE and UNLOAD_SORT
+    int iteration = 0; 
+    bool running = true;
+
+    while (running) {
+        switch (currentState) {
+            case WAIT_FOR_LIGHT:
+                waitForLight();
+                currentState = OUTSIDE_SWEEP;
+                break;
+
+            case OUTSIDE_SWEEP:
+                outsideSweep();
+                currentState = UNLOAD_SORT;
+                break;
+
+            case UNLOAD_SORT:
+                unloadSortBins();
+                // In the first pass, after unloading we move to PREP_CAVE.
+                // In the second pass, after unloading we go home.
+                if (iteration == 0) {
+                    currentState = PREP_CAVE;
+                } else { // iteration == 1
+                    currentState = GO_HOME;
+                }
+                break;
+
+            case PREP_CAVE:
+                prepCave();
+                // In the first pass, after prepping, the next step is cave sweep.
+                // In the second pass, after prepping, the next step is unloading.
+                if (iteration == 0) {
+                    currentState = CAVE_SWEEP;
+                } else { // iteration == 1
+                    currentState = UNLOAD_SORT;
+                }
+                break;
+
+            case CAVE_SWEEP:
+                caveSweep();
+                // After the cave sweep, we begin the second cycle with PREP_CAVE.
+                iteration = 1;
+                currentState = PREP_CAVE;
+                break;
+
+            case GO_HOME:
+                goHome();
+                currentState = FINISHED;
+                break;
+
+            case FINISHED:
+                running = false;
+                break;
+        }
+        // Optional delay between states
+        sleep(1);
+    }
+    printf("State machine completed.\n");
+
+    
+    
+    */
 // Thread function for handling data processing and motor control based on state machine
 void* data_work(void* arg) {
     while (running) {
         if (trigger_threads) {
+            //temporary silenced for testing parallelism
             pthread_mutex_lock(&print_mutex);
             printf("Thread 4 (Data) active! Working on assigned tasks!\n");
             pthread_mutex_unlock(&print_mutex);
@@ -220,26 +315,113 @@ void* data_work(void* arg) {
     }
     return NULL;
 }
+//gcc -o W IEEE2025RobotMain.C  -l wiringPi  $(python3-config --cflags --embed --libs)
 
-void* camera_work(void* arg){
-    pthread_mutex_lock(&print_mutex);
-    printf("Thread 3 (Camera) active! Detecting AprilTags...\n");
-    pthread_mutex_unlock(&print_mutex);
-    return 0;
+//this doesnt really need mutexes but a way to silence the output
+void* camera_work(void* arg) {
+    // Initialize the Python interpreter once.
+    Py_Initialize();
+    // (Optional) Initialize thread support for Python if not already done.
+    // PyEval_InitThreads();
+    
+    // Set up sys.path to include your module directory and silence output.
+    PyRun_SimpleString("import sys; sys.path.append('/home/arnold/Documents/GitHub/NCAT-IEEE-2025-Robotics-Competition-/J_Files')");
+  //  PyRun_SimpleString("import sys, os; sys.stdout = open(os.devnull, 'w'); sys.stderr = open(os.devnull, 'w')");//silences output
+
+    // Import the module "cmm".
+    PyObject *pName = PyUnicode_FromString("cmm");
+    PyObject *pModule = PyImport_Import(pName);
+    Py_DECREF(pName);
+
+    if (pModule == NULL) {
+        PyErr_Print();
+        fprintf(stderr, "Failed to load \"cmm.py\"\n");
+        Py_Finalize();
+        return NULL;
+    }
+
+    // Continuously monitor the global variable in the module.
+    while (running) {
+        // Acquire the GIL before calling Python APIs.
+        PyGILState_STATE gstate = PyGILState_Ensure();
+
+        // Get the module's globals dictionary.
+        PyObject *pDict = PyModule_GetDict(pModule);
+
+        // Retrieve the global variable "areThereBalls".
+        PyObject *pValue = PyDict_GetItemString(pDict, "areThereBalls");
+        if (pValue && PyLong_Check(pValue)) {
+            long myValue = PyLong_AsLong(pValue);
+            printf("Global variable 'areThereBalls' value: %ld\n", myValue);
+        } else {
+            printf("Global variable 'areThereBalls' not found or not an integer.\n");
+        }
+
+        // Release the GIL.
+        PyGILState_Release(gstate);
+        // Wait before checking again.
+        sleep(1);
+    }
+
+    // Cleanup when done.
+    Py_DECREF(pModule);
+    Py_Finalize();
+
+    return NULL;
 }
+
 
 //This function is the thread dedicated to operating sensors
 void* sensors_work(void* arg)
 {
-    while (1) {
+    while (running) {
         if (trigger_threads) {
             pthread_mutex_lock(&print_mutex);
             printf("Thread 2 (Sensors) received message: Multithreading Testing\n");
             pthread_mutex_unlock(&print_mutex);
-            break;  // Exit after printing the message
+            //break;  // Exit after printing the message
+            sleep(1);
         }
     }
     return NULL;
+}
+
+
+
+void waitForLight() {
+    printf("State: Wait For Light\n");
+    // Insert sensor logic to wait for a light trigger here.
+    sleep(2);
+}
+
+void outsideSweep() {
+    printf("State: Outside Sweep\n");
+    // Insert code for sweeping outside here.
+    sleep(2);
+}
+
+void unloadSortBins() {
+    printf("State: Unload and Sort to Bins\n");
+    // Insert code for unloading and sorting into bins here.
+    sleep(2);
+}
+
+void prepCave() {
+    printf("State: Prep Cave\n");
+    // Insert code to prepare the cave here.
+    sleep(2);
+}
+
+void caveSweep() {
+    printf("State: Cave Sweep\n");
+    // Insert code for sweeping inside the cave here.
+    sleep(2);
+}
+
+void goHome() {
+    printf("State: Go Home\n");
+    // Insert code for returning home here.
+    sleep(2);
 }
 
 // Main function to initialize UART, create threads, and manage execution
@@ -264,7 +446,7 @@ int main(void) {
         perror("pthread_create for thread 2 failed");
     }
     if (pthread_create(&thrd_3, NULL, camera_work, NULL) != 0) {
-        perror("pthread_create for thread 3 failed");
+      perror("pthread_create for thread 3 failed");
     }
     if (pthread_create(&thrd_4, NULL, data_work, NULL) != 0) {
         perror("pthread_create for thread 4 failed");
