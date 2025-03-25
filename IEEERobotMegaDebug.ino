@@ -92,7 +92,7 @@ void loop() {
 //    delay(10000);
 //  }
 
-//Testing Side Ultrasound: Loader rubs against the track and skews mevemnt but ultrasounds work alright
+//Testing Side Ultrasound: Loader rubs against the track and skews movement but ultrasounds work alright
 //  targetStop = obstacleLeft();
 //  targetStop1 = obstacleRight();
 //
@@ -113,29 +113,101 @@ void loop() {
 // ACTUAL SWEEP
 // Directions are in mm and angles are in tenths. Ex// moveForward(500) = 5cm,  rotateClockwise(900) = 90 degrees. NOTE that 750 is a nice sharp rotate 90 degrees
    waitForSwitch();
+//   delay(500);
+//   moveForward(350);
+//   delay(3000);
+//   rotateClockwise(800);
+//   delay(3000);
+//   moveBackward(228);
+//   delay(3000);
+//   moveRight(50);
+//   delay(1000);
+//   startScrew();
+//   delay(10000);
+//   stopScrew();
+//   delay(1000);
+//   delay(20000);
+//--------------------------------
+   delay(500);
    startBrush();
+   delay(1000);
+   moveForward(177);
+   delay(2000);
    rotateCounterClockwise(750);
-   delay(500);
-   moveForward(1000);
-   delay(500);
+   delay(3000);
+   rotateCounterClockwise(750);
+   delay(3000);
+   moveForward(228);
+   delay(2000);
    rotateClockwise(750);
-   delay(500);
-   moveForward(1000);
-   delay(500);
-   rotateClockwise(750);
-   delay(500);
-   moveForward(1000);
-   delay(500);
-   rotateClockwise(750);
-   delay(500);
-   moveForward(1000);
-   delay(500);
-   rotateClockwise(750);
-   delay(500);
-   moveForward(1000);
+   delay(3000);
+   moveBackward(101);
+   delay(1000);
+   moveForward(101);
+   delay(2000);
+   rotateClockwise(800);// angle to hit the cave wall
+   delay(3000);
+   moveForward(380);
+   delay(3000);//
+   rotateCounterClockwise(750);//
+   delay(3000);
+//After Collection, dump into sorting mechanism mid sweep
+//   raiseLoader();
+//   delay(2000);
+//   lowerLoader();
+//   delay(2000);
+   moveForward(152);
+   delay(3000);
+   rotateCounterClockwise(700);//
+   delay(3000);
+   moveForward(241);
+   delay(3000);
+   rotateCounterClockwise(700);//angle to back into wall near container
+   delay(3000);
+   moveBackward(508);
+   delay(3000);
+   moveRight(50);
+   delay(1000);
+//Dump minerals outside of robot into the container across origin
+   startStep();
+   delay(5000);
+   stopStep();
+   delay(1000);
+//Move to and Dump minerals outside of robot into the container next to origin
+   moveBackward(101);
+   delay(1000);
+   moveForward(360);//make sure it runs into the wall
+   delay(3000);
+   rotateClockwise(800);//angle to line up against cave wall next to container
+   delay(3000);
+   moveBackward(228);
+   delay(3000);
+   moveRight(50); //make sure its close to the container
+   delay(1000);
+   startScrew();
+   delay(10000);
+   stopScrew();
+   delay(1000);
+   //Enter Cave backwards and then come back out
+   moveLeft(165);
+   delay(1000);
+   moveBackward(101);
+   delay(1000);
+   moveForward(228);
+   delay(3000);
+   //Go to the container across the origin and push it to the rendevouz pad
+   moveRight(228);
+   delay(3000);
+   stopBrush();
+   delay(1000);
+   moveForward(508);
+   delay(10000);
+   //End of Sweep
    stopMovement();
+   delay(500);
    stopBrush();
    delay(20000);
+
 
   // Do not change the program on the BLE. Do not modify the code for the functions. Create a routine by calling the functions.
 }
