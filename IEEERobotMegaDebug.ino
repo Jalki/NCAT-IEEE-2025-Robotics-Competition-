@@ -8,6 +8,7 @@
 #define ECHO_PIN3 33
 #define MAX_DISTANCE 200
 
+
 int num1 = 0;
 #define interruptPin 2
 #define loaderRaise 43
@@ -16,6 +17,8 @@ int num1 = 0;
 #define screw 45
 #define stepMotor 47
 #define SW1 25
+
+
 
 #define loaderDelay 7500
 
@@ -29,7 +32,8 @@ int targetStop = 0; //holds the obstacleFront() value result
 int targetStop1 = 0;
 void setup() {
   // put your setup code here, to run once:
-
+  pinMode(A1, OUTPUT);
+  digitalWrite(A1, HIGH);
   pinMode(interruptPin, OUTPUT);
   pinMode(loaderLower, OUTPUT);
   pinMode(loaderRaise, OUTPUT);
@@ -131,7 +135,7 @@ void loop() {
    delay(500);
    startBrush();
    delay(1000);
-   moveForward(177);
+   moveForward(200);
    delay(2000);
    rotateCounterClockwise(750);
    delay(3000);
@@ -152,60 +156,97 @@ void loop() {
    rotateCounterClockwise(750);//
    delay(3000);
 //After Collection, dump into sorting mechanism mid sweep
-//   raiseLoader();
-//   delay(2000);
-//   lowerLoader();
-//   delay(2000);
-   moveForward(152);
+   raiseLoader();
+   delay(2000);
+   lowerLoader();
+   delay(2000);
+   moveForward(165);
    delay(3000);
    rotateCounterClockwise(700);//
    delay(3000);
-   moveForward(241);
+   moveForward(310);// move forward from cave wall to the Geodinium crate
    delay(3000);
-   rotateCounterClockwise(700);//angle to back into wall near container
+   rotateCounterClockwise(700);//angle to back into wall near Geodinium container
    delay(3000);
    moveBackward(508);
    delay(3000);
-   moveRight(50);
+   moveRight(120);
    delay(1000);
-//Dump minerals outside of robot into the container across origin
-   startStep();
-   delay(5000);
-   stopStep();
-   delay(1000);
-//Move to and Dump minerals outside of robot into the container next to origin
    moveBackward(101);
    delay(1000);
-   moveForward(360);//make sure it runs into the wall
+//Move to and Dump minerals outside of robot into the container next to origin
+   moveForward(345);//make sure it runs into the wall 270 degress initially
    delay(3000);
-   rotateClockwise(800);//angle to line up against cave wall next to container
+//   moveForward(381);
+//   targetStop = obstacleFront();
+//   if(targetStop <= 10){
+//    stopMovement();
+//   }
+//   delay(3000);
+   rotateClockwise(850);//angle to line up against cave wall next to container
    delay(3000);
    moveBackward(228);
    delay(3000);
-   moveRight(50); //make sure its close to the container
+   moveRight(100); //make sure its close to the container
+   delay(1000);
+   moveBackward(101);
+   delay(1000);
+   startStep();
+   delay(10000);
+   stopStep();
+   delay(1000);
+   //Enter Cave backwards and then come back out
+   moveLeft(140);// strafe so that we are in center of cave to back into
+   delay(3000);
+   moveBackward(127);
+   delay(2000);
+   //Go to the container, back up against wall and dump into Nebulite container
+   moveForward(650);// forward to go outside wave and stop by the right of the Neb container
+   delay(4500);
+//   moveLeft(241);
+//   delay(3000);
+//   moveBackward(101);
+//   delay(1000);
+   rotateCounterClockwise(750);//angle to back into wall near Geodinium container
+   delay(3000);
+   moveBackward(508);
+   delay(3000);
+   moveRight(170);
+   delay(2000);
+   moveBackward(101);
    delay(1000);
    startScrew();
    delay(10000);
    stopScrew();
    delay(1000);
-   //Enter Cave backwards and then come back out
-   moveLeft(165);
-   delay(1000);
+   //Reorient behind Nebulite container and push it to rendevouz pad
+   moveForward(175);
+   delay(3000);
+   rotateClockwise(750);
+   delay(3000);
+   moveBackward(200);
+   delay(3000);
+   moveLeft(228);
+   delay(3000);
    moveBackward(101);
    delay(1000);
-   moveForward(228);
-   delay(3000);
-   //Go to the container across the origin and push it to the rendevouz pad
-   moveRight(228);
-   delay(3000);
    stopBrush();
+   delay(500);
+   raiseLoader();
+   delay(3000);
+   moveForward(381);
+   delay(3000);
+   stopMovement();
    delay(1000);
-   moveForward(508);
-   delay(10000);
+   moveBackward(150);// move back to lower loader
+   delay(2000);
+   stopMovement();
+   delay(1000);
+   lowerLoader();
+   delay(3000);
    //End of Sweep
    stopMovement();
    delay(500);
-   stopBrush();
    delay(20000);
 
 
