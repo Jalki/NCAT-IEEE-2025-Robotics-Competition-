@@ -297,6 +297,7 @@
  // ------------------------------
  // Rotate clockwise
  // ------------------------------
+ 
  void rotateCW(int duration)
  {
      sendData(CW, duration);

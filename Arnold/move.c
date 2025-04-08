@@ -71,7 +71,7 @@ int moverobotxy(double target_x, double target_y);//NEW: By popular demand, this
 //Note: this is NOT a minmax algorithm since there are only 2 cases
 void printboxconflicts(void);//Best for viewing wall/box conflicts [unreliable for general diagonosis]
 int alignYcave(void);
-void getrobotparams(void);//prints robot rotation and position
+double *getrobotparams(void);//prints robot rotation and position
 
 double* getdeltas(void);//once called, this will reset delta values. Set each time after a successful [return 1] alignYcave() and moverobotxy(...) is called.
 double getangledelta(void);//once this called, it will reset angle deltas. Set each time a successful [return 1] rotaterobot(...) is called
@@ -1156,22 +1156,25 @@ void initregions(void) {
 }
 
 
-void getrobotparams(void) {
+double *getrobotparams(void) {
+    // Use a static array so that the returned pointer remains valid after the function returns.
+    // Array indices: 0 = pos_x, 1 = pos_y, 2 = facing code (ASCII of robot_dir)
+    static double params[3];
+    
+    // Calculate positions relative to the playable area (excluding borders)
     double pos_x = (robot_col - BORDER_CELLS) / (double)CELLS_PER_INCH;
     double pos_y = (robot_row - BORDER_CELLS) / (double)CELLS_PER_INCH;
-    char *facing;
     
-    // Convert the robot's facing direction character to a full word.
-    switch(robot_dir) {
-        case 'N': facing = "North"; break;
-        case 'S': facing = "South"; break;
-        case 'E': facing = "East";  break;
-        case 'W': facing = "West";  break;
-        default:  facing = "Unknown"; break;
-    }
+    params[0] = pos_x;
+    params[1] = pos_y;
+    params[2] = (double)robot_dir; // For example, 'N' = 78 in ASCII, 'E' = 69, etc.
     
-    printf("Robot Parameters: Facing %s, Position: (%.2f in, %.2f in) relative to playable field\n", 
-           facing, pos_x, pos_y);
+    // Optionally, print the parameters.
+    // (You can convert the ASCII code to a string externally if needed.)
+    printf("Robot Parameters: Facing '%c', Position: (%.2f in, %.2f in) relative to playable field\n", 
+           robot_dir, pos_x, pos_y);
+    
+    return params;
 }
 
 
