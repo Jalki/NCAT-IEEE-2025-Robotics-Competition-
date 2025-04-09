@@ -274,7 +274,7 @@ void* data_work(void* arg) {//current setup:
                 break;
 
             case OUTSIDE_SWEEP:
-                outsideSweep();
+               // outsideSweep();
                 currentState = UNLOAD_SORT;
                 break;
 
@@ -546,7 +546,7 @@ void outsideSweep() {
 			sleep(3);
 			moverobotxy(getrobotparams()[0], oldy);
 		}
-        if ((maxpos - getrobotparams()[0]) <= 6 && (maxpos != getrobotparams()[0])){
+        if ((maxpos - getrobotparams()[0]) <= 6 && (maxpos != getrobotparams()[0])){//horizontal adaptative movement towards right wall
             double currposx = getrobotparams()[0];
             moverobotxy(currposx + (maxpos - currposx), oldy);
         } else if ((maxpos - getrobotparams()[0]) > 6){
@@ -572,14 +572,111 @@ void unloadSortBins() {
 }
 
 void prepCave() {
-    alignYcave();
+    alignYcave();//any x, y coordinate should be accessible
 
 }
 
+/*Coordinate common[] = {//usage:    movexy(common[idx].x, common[idx].y);
+    {86.5, 7.5},//below upper stud[0]
+    {86.5, 37.0},//above lower stud[1]
+    {83.0, 6.0},//left upper stud[2]
+    {83.0, 38.5},//left lower stud[3]
+    {68.0, 6.0},//upper left corner in cave[4]
+    {68.0, 38.5},//lower left corner[5]
+    {48.5, 6.0},//upper right corner out cave[6]
+    {42.0, 38.0},//left 'G' box[7]
+    {48.5, 32.0},//above 'G' box[8]
+	{26.5, 3},//G box centre [9]
+	{31, 38.5}//home point[10]
+};
+*/
+
 void caveSweep() {
     printf("State: Cave Sweep\n");
-    // Insert code for sweeping inside the cave here.
-    sleep(2);
+   /*
+   plan: plumb all the way right. retract to original position.
+   sweep up and turn to center, then go down, return to center, up to x-oriented position left of studs. then move towards x orientation
+   right in between studs [test left, then upwards to catch stray parts]. repeat to bottom side.
+   
+   as a result, this is depicted in a while loop
+   */
+    
+    double oldy = getrobotparams()[1];
+
+    moverobotxy(common[4].x, oldy);
+
+
+    double oldx = getrobotparams()[0];
+    double Xmaxpos = 86.5;
+
+    point('E');
+    moverobotxy(Xmaxpos, oldy);
+    moverobotxy(oldx, oldy);
+    point('N');
+
+
+    while (getrobotparams()[0] <= Xmaxpos && running)//start YOLO oabject detection concurrency test4
+    //this constitutes the entiriety of the sweep
+    {
+        
+        if (ballexist){//y axis movement upward only
+            moverobotxy(getrobotparams()[0], 6);
+            sleep(3);
+            moverobotxy(getrobotparams()[0], oldy);
+        }
+
+        //at this point, the robot is in the y-centerline [or should be]
+        point('S');
+        //begin southbound sweep
+
+        if (ballexist){//y axis movement downward only
+            moverobotxy(getrobotparams()[0], 38.5);
+            sleep(3);
+            moverobotxy(getrobotparams()[0], oldy);
+        }
+
+        point('N');//return to point up
+
+
+        //adaptive horizontal sweep to certain extent
+        if ((maxpos - getrobotparams()[0]) <= 6 && (maxpos != getrobotparams()[0])){
+            double currposx = getrobotparams()[0];
+            moverobotxy(currposx + (maxpos - currposx), oldy);
+        } else if ((maxpos - getrobotparams()[0]) > 6){
+            // printf("maxpos = %.2f, current X position = %.2f\n", maxpos, params[0]);
+            moverobotxy(getrobotparams()[0]+6, oldy);
+        } else {
+            break;
+        }
+
+        sleep(.25);
+    }
+
+    //at this point, we are very close to the end of the right side. there is only one set of movements to do
+    moverobotxy(Xmaxpos, oldy);
+
+    if (ballexist){//y axis movement upward only
+        moverobotxy(getrobotparams()[0], common[0].y);
+        sleep(3);
+        moverobotxy(getrobotparams()[0], oldy);
+    }
+
+    //at this point, the robot is in the y-centerline [or should be]
+    //it should be noted that proper clearance is required--use the appropriate function instead
+    prepareclearance('E', 'S');
+
+    //begin southbound sweep
+
+    if (ballexist){//y axis movement downward only
+        moverobotxy(getrobotparams()[0], common[1].y);
+        sleep(3);
+        moverobotxy(getrobotparams()[0], oldy);
+    }
+
+    alignYcave(); //verify y alignment before next state
+
+
+    
 }
 
 void goHome() {
