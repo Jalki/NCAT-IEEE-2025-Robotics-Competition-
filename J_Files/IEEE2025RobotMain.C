@@ -142,6 +142,18 @@ void Inert_State() {
 
 // Thread function for actuator operations
 void* actuators_work(void* arg) {
+
+    printf("opening uart");
+    // Open UART connection
+    uart_fd = open(UART_PORT, O_RDWR | O_NOCTTY);
+    if (uart_fd == -1) {
+        perror("Unable to open UART");
+        return -1;
+    }
+    configure_uart(uart_fd);
+
+    printf("uart configured.");
+
     while (running) {
         if (trigger_threads) {
             pthread_mutex_lock(&print_mutex);
@@ -269,12 +281,12 @@ void* data_work(void* arg) {//current setup:
                 Inert_State();
 
             case WAIT_FOR_LIGHT:
-                waitForLight();
+                waitForLight();//initializes movement grid system
                 currentState = OUTSIDE_SWEEP;
                 break;
 
             case OUTSIDE_SWEEP:
-                outsideSweep();
+               outsideSweep();
                 currentState = UNLOAD_SORT;
                 break;
 
@@ -510,29 +522,29 @@ void outsideSweep() {
     
 	double *params = getrobotparams();// only current on first call
 	
-	moverobotxy(26.5, params[1]);// [this is a crafty way of translating only by one axis, keep this in mind]
-	moverobotxy(26.5,12.5);//validate this position--below box
-	moverobotxy(common[10].x, common[10].y);//home
+	movexy(26.5, params[1]);// [this is a crafty way of translating only by one axis, keep this in mind]
+	movexy(26.5,12.5);//validate this position--below box
+	movexy(common[10].x, common[10].y);//home
 	prepareclearance('S', 'W'); //automatically point west w/ clearance work
 	
-	moverobotxy(17, getrobotparams()[1]); //move left of N box at current y coordinate
-	moverobotxy(17, 6);//clear left of N box upwards
-	moverobotxy(common[10].x, common[10].y);//go home [should go y-x]
+	movexy(17, getrobotparams()[1]); //move left of N box at current y coordinate
+	movexy(17, 6);//clear left of N box upwards
+	movexy(common[10].x, common[10].y);//go home [should go y-x]
 	prepareclearance('S', 'E');//point towards G box
 	//direction: E
-	moverobotxy(common[7].x, common[7].y);//left of G box [pass]
-	moverobotxy(common[10].x, common[10].y);//home
-	moverobotxy(getrobotparams()[0], common[8].y);//going up above G box
-	moverobotxy(common[8].x, common[8].y);//above G box
+	movexy(common[7].x, common[7].y);//left of G box [pass]
+	movexy(common[10].x, common[10].y);//home
+	movexy(getrobotparams()[0], common[8].y);//going up above G box
+	movexy(common[8].x, common[8].y);//above G box
 	//uncertain movements
 	//at this point, the unimplemented box clawing action can go here, the rest of the code 
 	//mostly unchanged
 	
 	//current incomplete implement trial
 	//assumption: robot is above G box
-	moverobotxy(common[8].x - 3, getrobotparams()[1]);//give clearance on E [pass]
+	movexy(common[8].x - 3, getrobotparams()[1]);//give clearance on E [pass]
 	prepareclearance('S', 'N');//prepare for pseudo sweep pointing north
-	moverobotxy(36, getrobotparams()[1]); //GENIUS way of once again taking advantage of predetermined coords
+	movexy(36, getrobotparams()[1]); //GENIUS way of once again taking advantage of predetermined coords
 	
     printf("START OF INITIAL SWEEP");
 	double oldy = getrobotparams()[1];
@@ -542,16 +554,16 @@ void outsideSweep() {
 	{
 		
 		if (ballexist){
-			moverobotxy(getrobotparams()[0], 6);
+			movexy(getrobotparams()[0], 6);
 			sleep(3);
-			moverobotxy(getrobotparams()[0], oldy);
+			movexy(getrobotparams()[0], oldy);
 		}
         if ((maxpos - getrobotparams()[0]) <= 6 && (maxpos != getrobotparams()[0])){//horizontal adaptative movement towards right wall
             double currposx = getrobotparams()[0];
-            moverobotxy(currposx + (maxpos - currposx), oldy);
+            movexy(currposx + (maxpos - currposx), oldy);
         } else if ((maxpos - getrobotparams()[0]) > 6){
            // printf("maxpos = %.2f, current X position = %.2f\n", maxpos, params[0]);
-            moverobotxy(getrobotparams()[0]+6, oldy);
+            movexy(getrobotparams()[0]+6, oldy);
         } else {
             break;
         }
@@ -559,12 +571,11 @@ void outsideSweep() {
 		sleep(.25);
 	}
 	
-	alignYcave();
+	aligncave();
     point('E'); //end of sweep
 	printf("END OF INITIAL SWEEP");
 	
 }
-
 void unloadSortBins() {
     printf("State: Unload and Sort to Bins\n");
     // Insert code for unloading and sorting into bins here.
@@ -719,7 +730,7 @@ int point(char targetDir) {
            currentDir, currentIndex, targetDir, targetIndex, angleDiff);
 
     // Call the rotation function.
-    if (rotaterobot(angleDiff)) {
+    if (rotate(angleDiff)) {
         printf("point: Successfully pointed to '%c'.\n", targetDir);
         return 1;
     } else {
@@ -767,7 +778,7 @@ int prepareclearance(char borderdir, char facingfinaldirection) {
     }
     
     // Perform the clearance move by calling moverobotxy with the new target.
-    if (!moverobotxy(clearance_x, clearance_y)) {
+    if (!movexy(clearance_x, clearance_y)) {
         printf("prepareclearance: Clearance move failed.\n");
         return 0;
     }
@@ -800,14 +811,14 @@ int prepareclearance(char borderdir, char facingfinaldirection) {
     printf("prepareclearance: Rotating robot by %d to face %c\n", angleDiff, facingfinaldirection);
     
     // rotaterobot the robot by the computed angle using the new rotaterobot() function.
-    if (!rotaterobot((double)angleDiff)) {
+    if (!rotate((double)angleDiff)) {
         printf("prepareclearance: Rotation failed.\n");
         return 0;
     }
     
     // Finally, undo the clearance move by returning to the original position.
     printf("prepareclearance: Undoing clearance move: Returning to original position (%.2f, %.2f)\n", orig_x, orig_y);
-    if (!moverobotxy(orig_x, orig_y)) {
+    if (!movexy(orig_x, orig_y)) {
         printf("prepareclearance: Undo clearance move failed.\n");
         return 0;
     }
