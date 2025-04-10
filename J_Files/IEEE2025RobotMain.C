@@ -274,7 +274,7 @@ void* data_work(void* arg) {//current setup:
                 break;
 
             case OUTSIDE_SWEEP:
-               // outsideSweep();
+                outsideSweep();
                 currentState = UNLOAD_SORT;
                 break;
 
@@ -301,7 +301,7 @@ void* data_work(void* arg) {//current setup:
                 break;
 
             case CAVE_SWEEP:
-                caveSweep();
+                //caveSweep();
                 // After the cave sweep, we begin the second cycle with PREP_CAVE.
                 iteration = 1;
                 currentState = PREP_CAVE;
@@ -639,11 +639,11 @@ void caveSweep() {
 
 
         //adaptive horizontal sweep to certain extent
-        if ((maxpos - getrobotparams()[0]) <= 6 && (maxpos != getrobotparams()[0])){
+        if ((Xmaxpos - getrobotparams()[0]) <= 6 && (Xmaxpos != getrobotparams()[0])){
             double currposx = getrobotparams()[0];
-            moverobotxy(currposx + (maxpos - currposx), oldy);
-        } else if ((maxpos - getrobotparams()[0]) > 6){
-            // printf("maxpos = %.2f, current X position = %.2f\n", maxpos, params[0]);
+            moverobotxy(currposx + (Xmaxpos - currposx), oldy);
+        } else if ((Xmaxpos - getrobotparams()[0]) > 6){
+            // printf("Xmaxpos = %.2f, current X position = %.2f\n", Xmaxpos, params[0]);
             moverobotxy(getrobotparams()[0]+6, oldy);
         } else {
             break;

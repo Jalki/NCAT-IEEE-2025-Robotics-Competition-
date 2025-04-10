@@ -171,6 +171,7 @@ void loop() {
   //statemachine();
 }
 
+/* as it is understood as of 4/8/25 this doesnt belong here are these are level 1 functions [level 0 are diagram/circuit/physics level functions]
 //Statemachine that correspond with the raspberry pi states to operate certain sensors
 void statemachine(){
   if (Serial1.available()) {
@@ -199,7 +200,7 @@ void statemachine(){
         }
     }
 }
-
+*/
 // Calculate room ambient light source average
 void ALSAVG() {
   float pdel_h = pde * 1.20;
