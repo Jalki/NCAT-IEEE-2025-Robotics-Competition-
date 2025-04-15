@@ -1,7 +1,5 @@
 #include "Arduino_BMI270_BMM150.h"
 
-#include "Arduino_BMI270_BMM150.h"
-
 // Motor pins
 int Motor1For = 2;
 int Motor1Back = 3;
@@ -34,13 +32,14 @@ float dampingFactor = 0.02; // Adjust as needed reduce if velocity is changing t
 
 // Movement control
 enum State { FORWARD, BACKWARD, LEFT, RIGHT, STOP };
-State currentState = FORWARD;
-float targetDistance = 0.01; // Target distance in meters (1 cm)
+State currentState = STOP;
+//float targetDistanceX = 0.04; // Target distance in meters (1 cm)
+//float targetDistanceY = 0.01; //Target distance in meters
 bool movementComplete = false;
 
 void setup() {
   Serial.begin(9600);
-  while (!Serial);
+  Serial1.begin(9600);
 
   // Initialize the IMU
   if (!IMU.begin()) {
@@ -64,14 +63,15 @@ void setup() {
 }
 
 void loop() {
+  //Serial.print("Starting Tasks!");
   // Read acceleration data
   if (IMU.accelerationAvailable()) {
     IMU.readAcceleration(accelX, accelY, accelZ);
 
     // Subtract bias
-    accelX -= biasX;
-    accelY -= biasY;
-    accelZ -= biasZ;
+    //accelX -= biasX;
+    //accelY -= biasY;
+    //accelZ -= biasZ;
 
     // Subtract gravity from Z-axis (if sensor is not level)
     accelZ -= 9.81;
@@ -111,19 +111,59 @@ void loop() {
     }
 
     // Print the results
-    Serial.print("Position X: ");
-    Serial.print(positionX);
-    Serial.print(" m, Y: ");
-    Serial.print(positionY);
+   // Serial.print("Position X: ");
+    Serial.println(positionX);
+    //Serial.print(" m, Y: ");
+    Serial.println(positionY);
     Serial.print(" m, Z: ");
     Serial.print(positionZ);
     Serial.println(" m");
 
-    // Control movement based on state
-    switch (currentState) {
+  //float originData[3] = {0.00, 0.00, 0.00};
+  //After setting the origin data, checks to make sure we are straight in position and angle!
+  //pos_accel(0.00,0.00);
+  //rotate_gyro(0.00);
+  if (Serial1.available()){
+    char input[50];
+    int bytesRead = Serial1.readBytesUntil('\n', input, sizeof(input) -1);
+    input[bytesRead] = '\0';
+    float x, y, rotation;
+    int parsed = sscanf(input, "%f,%f,%f", &x, &y, &rotation);
+
+  if (parsed == 3){ //Ensure all three values were recieved
+    Serial.print("Received X: ");
+    Serial.println(x);
+    x  / 0.3937008; //Converts to inches!
+    Serial.print("Received Y: ");
+    Serial.println(y);
+    y / 0.3937008; //Converts to inches!
+    Serial.print("Recieved Rotation: ");
+    Serial.println(rotation);
+    if( (x != 0.00) || (y != 0.00))
+    {
+       movement(x, y);
+    }else{
+      Serial.print("No x or y to move to!");
+    }
+    if(rotation != 0.00){
+       rotate_gyro(rotation);
+    }else{
+      Serial.print("No rotation to rotate to!");
+    }
+    //Serial1.write(val);
+    //Serial.print(val);
+  }else{
+    Serial.println("Data parse error!");
+    }
+  }
+}
+} 
+
+void movement(float targetDistanceX, float targetDistanceY){
+  switch (currentState) {
       case FORWARD:
         move_forward();
-        if (positionX >= targetDistance) {
+        if (positionX >= targetDistanceX) {
           stop_movement();
           currentState = BACKWARD;
           positionX = 0; // Reset position for next movement
@@ -132,7 +172,7 @@ void loop() {
 
       case BACKWARD:
         move_backward();
-        if (positionX <= -targetDistance) {
+        if (positionX <= -targetDistanceX) {
           stop_movement();
           currentState = LEFT;
           positionX = 0; // Reset position for next movement
@@ -140,8 +180,8 @@ void loop() {
         break;
 
       case LEFT:
-        rotate_gyro(180.0);
-        if (positionY >= targetDistance) {
+        move_Strafe_Left();
+        if (positionY >= targetDistanceY) {
           stop_movement();
           currentState = RIGHT;
           positionY = 0; // Reset position for next movement
@@ -149,18 +189,18 @@ void loop() {
         break;
 
       case RIGHT:
-        rotate_gyro(-360.0);
-        if (positionY <= -targetDistance) {
+        move_Strafe_Right();
+        if (positionY <= -targetDistanceY) {
           stop_movement();
           currentState = FORWARD;
+          positionY = 0; //Reset position for the next movement
         }
         break;
-
       case STOP:
         // Do nothing
+        Serial1.print("Complete");
         break;
     }
-  }
 }
 
 void rotate_gyro(float targetAngle) {
@@ -170,7 +210,7 @@ void rotate_gyro(float targetAngle) {
     unsigned long prevTime = millis();
 
     // **1. Measure drift before rotation**  
-    int numSamples = 50;
+    int numSamples = 70;
     for (int i = 0; i < numSamples; i++) {
         if (IMU.gyroscopeAvailable()) {
             IMU.readGyroscope(gx, gy, gz);
@@ -209,6 +249,7 @@ void rotate_gyro(float targetAngle) {
         }
     }
     stop_movement();  // Stop once the target angle is reached
+    Serial1.println("Complete");
 }
 
 // Function to check if the sensor is stationary
@@ -222,7 +263,7 @@ bool isStationary(float accelX, float accelY, float accelZ) {
 
 // Function to calibrate bias
 void calibrateBias() {
-  int numSamples = 1000; // Increase the number of samples
+  int numSamples = 1500; // Increase the number of samples to improve accuracy
   float sumX = 0, sumY = 0, sumZ = 0;
 
   for (int i = 0; i < numSamples; i++) {
@@ -245,6 +286,7 @@ void calibrateBias() {
   Serial.print(biasY);
   Serial.print(", Z: ");
   Serial.println(biasZ);
+  Serial1.println("Calibration Complete");
 }
 
 // Motor control functions (unchanged)
