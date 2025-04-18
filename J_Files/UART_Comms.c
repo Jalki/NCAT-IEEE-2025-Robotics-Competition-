@@ -95,8 +95,7 @@ char* uart_read(int fd) {
     printf("Received: %s\n", buffer);
     return buffer;
 }
-
-/* temporary silence main
+//gcc -o W UART_Comms.c  -l wiringPi
 int main() {
     initalizemovement();
     
@@ -107,15 +106,15 @@ int main() {
         return -1;
     }
     configure_uart(uart_fd);
-    movexy(30.00, 22.50);
-    rotate(90.0);
+
+    movexy(8.5, 32.0);
     //runEdgeCaseTests();
     
 
     close(uart_fd);
     return 0;
 }
-*/
+
 
 
 //Contributions by Arnold
@@ -144,7 +143,7 @@ int movexy(double target_x, double target_y) {
             printf("entering while loop");
             while (strcmp(uart_read(uart_fd), "Complete") != 0) {
                 printf("test\n");
-                sleep(1);
+                
             }
 
 
@@ -160,7 +159,7 @@ int movexy(double target_x, double target_y) {
             printf("entering while loop pt2");
             while (strcmp(uart_read(uart_fd), "Complete") != 0) {
                 printf("test\n");
-                sleep(1);
+                
             }
 
 
@@ -206,7 +205,7 @@ int aligncave() {
             printf("entering while loop for align y");
             while (strcmp(uart_read(uart_fd), "Complete") != 0) {
                 printf("test\n");
-                sleep(1);
+                
             }
 
 
@@ -269,3 +268,4 @@ int rotate(double angle) {
     return 1;
 }
 
+//gcc -o W UART_Comms.c  -l wiringPi

@@ -143,16 +143,6 @@ void Inert_State() {
 // Thread function for actuator operations
 void* actuators_work(void* arg) {
 
-    printf("opening uart");
-    // Open UART connection
-    uart_fd = open(UART_PORT, O_RDWR | O_NOCTTY);
-    if (uart_fd == -1) {
-        perror("Unable to open UART");
-        return -1;
-    }
-    configure_uart(uart_fd);
-
-    printf("uart configured.");
 
     while (running) {
         if (trigger_threads) {
@@ -424,7 +414,7 @@ void* camera_work(void* arg) {
     Py_Initialize();
 
     // Open the Python script file.
-    const char *script_path = "/home/arnold/Documents/GitHub/NCAT-IEEE-2025-Robotics-Competition-/J_Files/cmm.py";
+    const char *script_path = "/home/SECON2025/Documents/GitHub/NCAT-IEEE-2025-Robotics-Competition-/J_Files/cmm.py";
     PyRun_SimpleString("import sys, os; sys.stdout = open(os.devnull, 'w'); sys.stderr = open(os.devnull, 'w')");//silences output
     FILE *fp = fopen(script_path, "r");
     if (fp == NULL) {
@@ -842,6 +832,18 @@ int main(void) {
     }
     //Py_Initialize();
 
+
+    printf("opening uart");
+    // Open UART connection
+    uart_fd = open(UART_PORT, O_RDWR | O_NOCTTY);
+    if (uart_fd == -1) {
+        perror("Unable to open UART");
+        return -1;
+    }
+    configure_uart(uart_fd);
+
+    printf("uart configured.");
+    
     // Create threads
     pthread_t thrd_1, thrd_2, thrd_3, thrd_4;
     trigger_threads = 1;  // Ensure threads are triggered to run
