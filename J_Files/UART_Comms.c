@@ -93,9 +93,26 @@ char* uart_read(int fd) {
         }
     }
     printf("Received: %s\n", buffer);
+
     return buffer;
 }
 //gcc -o W UART_Comms.c  -l wiringPi
+
+/*Coordinate common[] = {//usage:    movexy(common[idx].x, common[idx].y);
+    {86.5, 7.5},//below upper stud[0]
+    {86.5, 37.0},//above lower stud[1]
+    {83.0, 6.0},//left upper stud[2]
+    {83.0, 38.5},//left lower stud[3]
+    {68.0, 6.0},//upper left corner in cave[4]
+    {68.0, 38.5},//lower left corner[5]
+    {48.5, 6.0},//upper right corner out cave[6]
+    {42.0, 38.0},//left 'G' box[7]
+    {48.5, 32.0},//above 'G' box[8]
+	{26.5, 3},//G box centre [9]
+	{31, 38.5}//home point[10]
+};
+*/
+
 int main() {
     initalizemovement();
     
@@ -107,9 +124,10 @@ int main() {
     }
     configure_uart(uart_fd);
 
-    movexy(8.5, 32.0);
+    movexy(28, 30);
     //runEdgeCaseTests();
-    
+    rotate(180);
+    rotate(-180);
 
     close(uart_fd);
     return 0;
@@ -141,7 +159,7 @@ int movexy(double target_x, double target_y) {
             uart_direction_Write(uart_fd, dx, 0.00, 0.00);
 
             printf("entering while loop");
-            while (strcmp(uart_read(uart_fd), "Complete") != 0) {
+            while (strcmp(uart_read(uart_fd), "Complete") == 0) {
                 printf("test\n");
                 
             }
@@ -157,7 +175,7 @@ int movexy(double target_x, double target_y) {
 
             uart_direction_Write(uart_fd, 0, dy, 0);
             printf("entering while loop pt2");
-            while (strcmp(uart_read(uart_fd), "Complete") != 0) {
+            while (strcmp(uart_read(uart_fd), "Complete") == 0) {
                 printf("test\n");
                 
             }
@@ -203,10 +221,12 @@ int aligncave() {
             uart_direction_Write(uart_fd, dx, 0.00, 0.00);
 
             printf("entering while loop for align y");
-            while (strcmp(uart_read(uart_fd), "Complete") != 0) {
-                printf("test\n");
-                
-            }
+            while (1) {
+                if(strcmp(uart_read(uart_fd), "Complete") == 0) {
+                 printf("movement mechanically completed");
+                 break;}
+                 sleep(1);
+             }
 
 
             printf("sending second set");
@@ -219,8 +239,10 @@ int aligncave() {
 
             uart_direction_Write(uart_fd, 0, dy, 0);
             printf("entering while loop pt2");
-            while (strcmp(uart_read(uart_fd), "Complete") != 0) {
-                printf("test\n");
+            while (1) {
+               if(strcmp(uart_read(uart_fd), "Complete") == 0) {
+                printf("movement mechanically completed");
+                break;}
                 sleep(1);
             }
 
@@ -264,6 +286,7 @@ int rotate(double angle) {
         // [Insert any additional angle delta processing code here.]//PARTICULARLY, UART
         printf("rotate: Processing angle delta: %.2f degrees.\n", aDelta);
         uart_direction_Write(uart_fd, 0, 0, aDelta);
+        
     }
     return 1;
 }
