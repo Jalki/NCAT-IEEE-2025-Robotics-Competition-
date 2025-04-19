@@ -83,7 +83,7 @@ void polluart() {
         printf("Received %zu bytes: \"%s\"\n", len, data);
         
         // compare to exactly "Complete"
-        if (strcmp(data, "Complete") == 0) {
+        if (strcmp(data, "Complete") == 0  || strcmp(data, "Complete\n") == 0) {
             // buffer is exactly "Complete"
             printf("rotation/movement mechanical done\n");
         }
