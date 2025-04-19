@@ -134,7 +134,16 @@ int main() {
 }
 
 
+void polluart() {
 
+    while (1) {
+        if(strcmp(uart_read(uart_fd), "Complete") == 0) {
+         printf("movement/rotation mechanically completed");
+         break;}
+         sleep(1);
+     }
+
+}
 //Contributions by Arnold
 // New function: movexy()
 // Moves the robot to the given target coordinates (in inches relative to the playable area)
@@ -158,31 +167,26 @@ int movexy(double target_x, double target_y) {
 
             uart_direction_Write(uart_fd, dx, 0.00, 0.00);
 
-            printf("entering while loop");
-            while (strcmp(uart_read(uart_fd), "Complete") == 0) {
-                printf("test\n");
-                
-            }
-
+            polluart();
 
             printf("sending second set");
             
             uart_direction_Write(uart_fd, 0.00, dy, 0.00);
+            polluart();
+
         }
         else if (primary == 'y') {
             // Code branch for primary y-axis movement.
             printf("movexy: Primary axis is Y. [Insert y-axis processing code here]\n");//PARTICULARLY, UART
 
             uart_direction_Write(uart_fd, 0, dy, 0);
-            printf("entering while loop pt2");
-            while (strcmp(uart_read(uart_fd), "Complete") == 0) {
-                printf("test\n");
-                
-            }
 
+            polluart();
 
             printf("sending second set");
             uart_direction_Write(uart_fd, dx, 0, 0);
+            polluart();
+
 
 
         }
@@ -221,16 +225,12 @@ int aligncave() {
             uart_direction_Write(uart_fd, dx, 0.00, 0.00);
 
             printf("entering while loop for align y");
-            while (1) {
-                if(strcmp(uart_read(uart_fd), "Complete") == 0) {
-                 printf("movement mechanically completed");
-                 break;}
-                 sleep(1);
-             }
+            polluart();
 
 
             printf("sending second set");
-            
+            polluart();
+
             uart_direction_Write(uart_fd, 0.00, dy, 0.00);
         }
         else if (primary == 'y') {
@@ -239,17 +239,11 @@ int aligncave() {
 
             uart_direction_Write(uart_fd, 0, dy, 0);
             printf("entering while loop pt2");
-            while (1) {
-               if(strcmp(uart_read(uart_fd), "Complete") == 0) {
-                printf("movement mechanically completed");
-                break;}
-                sleep(1);
-            }
-
+            polluart();
 
             printf("sending second set");
             uart_direction_Write(uart_fd, dx, 0, 0);
-
+            polluart();
 
         }
         else {
@@ -286,6 +280,7 @@ int rotate(double angle) {
         // [Insert any additional angle delta processing code here.]//PARTICULARLY, UART
         printf("rotate: Processing angle delta: %.2f degrees.\n", aDelta);
         uart_direction_Write(uart_fd, 0, 0, aDelta);
+        polluart();
         
     }
     return 1;
