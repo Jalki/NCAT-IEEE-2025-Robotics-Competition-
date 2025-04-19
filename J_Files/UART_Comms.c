@@ -7,7 +7,7 @@
 #include <string.h>   // String functions
 #include <errno.h>    // Error handling
 #include <sys/time.h> // System time functions
-
+#include <string.h>  // for strlen()
 #include "move.c" //This is Arnold Grid code!!!
 
 #define UART_PORT "/dev/ttyAMA0" // Change this to your actual serial port
@@ -23,7 +23,7 @@ int uart_fd = -1;  // Global UART file descriptor
 //Level 1 functions
 int movexy(double target_x, double target_y);
 int rotate(double angle);
-
+char* uart_read(int fd);
 
 // Function to configure UART
 void configure_uart(int uart_fd) {
@@ -74,6 +74,32 @@ void uart_write_state(int fd, int State)
     }
 }
 
+
+void polluart() {
+    // Somewhere in your code, after you've called uart_read:
+    char *data = uart_read(uart_fd);
+    if (data) {
+        size_t len = strlen(data);
+        printf("Received %zu bytes: \"%s\"\n", len, data);
+        
+        // compare to exactly "Complete"
+        if (strcmp(data, "Complete") == 0) {
+            // buffer is exactly "Complete"
+            printf("rotation/movement mechanical done\n");
+        }
+        else if (strcmp(data, "Error") == 0) {
+            // buffer is exactly "Error"
+            printf("Got an error signal.\n");
+        }
+        else {
+            // something else
+            printf("Received something else: %s\n", data);
+        }
+    }
+
+}
+
+
 // Function to read data from UART
 char* uart_read(int fd) {
     int index = 0;
@@ -93,7 +119,7 @@ char* uart_read(int fd) {
         }
     }
     printf("Received: %s\n", buffer);
-
+    
     return buffer;
 }
 //gcc -o W UART_Comms.c  -l wiringPi
@@ -111,6 +137,12 @@ char* uart_read(int fd) {
 	{26.5, 3},//G box centre [9]
 	{31, 38.5}//home point[10]
 };
+
+
+cd J_Files
+gcc -o W UART_Comms.c  -l wiringPi
+./W
+
 */
 
 int main() {
@@ -134,16 +166,7 @@ int main() {
 }
 
 
-void polluart() {
 
-    while (1) {
-        if(strcmp(uart_read(uart_fd), "Complete") == 0) {
-         printf("movement/rotation mechanically completed");
-         break;}
-         sleep(1);
-     }
-
-}
 //Contributions by Arnold
 // New function: movexy()
 // Moves the robot to the given target coordinates (in inches relative to the playable area)
