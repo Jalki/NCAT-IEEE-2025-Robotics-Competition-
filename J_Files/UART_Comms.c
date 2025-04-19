@@ -79,11 +79,16 @@ void polluart() {
     // Somewhere in your code, after you've called uart_read:
     char *data = uart_read(uart_fd);
     if (data) {
-        size_t len = strlen(data);
-        printf("Received %zu bytes: \"%s\"\n", len, data);
+        size_t len = strlen(buffer);
+        // strip any '\r' or '\n' at end
+        while (len > 0 &&
+            (buffer[len‑1] == '\r' || buffer[len‑1] == '\n')) {
+            buffer[--len] = '\0';
+            }
+
         
         // compare to exactly "Complete"
-        if (strcmp(data, "Complete") == 0  || strcmp(data, "Complete\n") == 0) {
+        if (strcmp(data, "Complete") == 0 ) {
             // buffer is exactly "Complete"
             printf("rotation/movement mechanical done\n");
         }
