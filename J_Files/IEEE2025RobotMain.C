@@ -494,6 +494,33 @@ void waitForLight() {
     initalizemovement();
     // Insert sensor logic to wait for a light trigger here.
     sleep(2);
+//start motor sequence
+MotorCall = 1;
+sleep(2);
+MotorCall = 0;
+sleep(2);
+
+MotorCall = 2;
+sleep(2);
+MotorCall = 0;
+sleep(2);
+
+MotorCall = 3;
+sleep(2);
+MotorCall = 0;
+sleep(2);
+
+MotorCall = 4;
+sleep(2);
+MotorCall = 0;
+sleep(2);
+
+MotorCall = 5;
+sleep(2);
+MotorCall = 0;
+sleep(2);
+//end motor sequence
+
 }
 
 /*Coordinate common[] = {//usage:    movexy(common[idx].x, common[idx].y);
