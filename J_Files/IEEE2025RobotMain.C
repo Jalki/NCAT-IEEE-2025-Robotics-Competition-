@@ -406,8 +406,11 @@ void* data_work(void* arg) {
 
 
 */
-//gcc -o W IEEE2025RobotMain.C  -l wiringPi  $(python3-config --cflags --embed --libs)
-
+/*
+cd J_Files
+gcc -o W IEEE2025RobotMain.C  -l wiringPi  $(python3-config --cflags --embed --libs)
+./W
+*/
 //this doesnt really need mutexes but a way to silence the output
 void* camera_work(void* arg) {
     // Initialize the Python interpreter.

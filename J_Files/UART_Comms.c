@@ -125,24 +125,7 @@ char* uart_read(int fd) {
 
 
 
-typedef struct {
-    double x;
-    double y;
-} Coordinate;
- 
-Coordinate common[] = {//usage:    movexy(common[idx].x, common[idx].y);
-    {86.5, 7.5},//below upper stud[0]
-    {86.5, 37.0},//above lower stud[1]
-    {83.0, 6.0},//left upper stud[2]
-    {83.0, 38.5},//left lower stud[3]
-    {68.0, 6.0},//upper left corner in cave[4]
-    {68.0, 38.5},//lower left corner[5]
-    {48.5, 6.0},//upper right corner out cave[6]
-    {42.0, 38.0},//left 'G' box[7]
-    {48.5, 32.0},//above 'G' box[8]
-	{26.5, 3},//G box centre [9]
-	{31, 38.5}//home point[10]
-};
+
 /*
 
 cd J_Files
@@ -150,7 +133,7 @@ gcc -o W UART_Comms.c  -l wiringPi
 ./W
 
 */
-
+/*
 int main() {
     initalizemovement();
     
@@ -162,22 +145,20 @@ int main() {
     }
     configure_uart(uart_fd);
 
-    while(1){
-    // start one edge to the left
-movexy(common[10].x - 10, common[10].y);
+
 // then down
-movexy(common[10].x, common[10].y - 10);
+movexy(common[10].x-10, common[10].y);
 
     //runEdgeCaseTests();
    // rotate(180);
    // rotate(-180);
-}
+
 
     close(uart_fd);
     return 0;
 }
 
-
+*/
 
 //Contributions by Arnold
 // New function: movexy()
