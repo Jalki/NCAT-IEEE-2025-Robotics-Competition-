@@ -76,32 +76,26 @@ void uart_write_state(int fd, int State)
 
 
 void polluart() {
-    // Somewhere in your code, after you've called uart_read:
     char *data = uart_read(uart_fd);
-    if (data) {
-        size_t len = strlen(buffer);
-        // strip any '\r' or '\n' at end
-        while (len > 0 &&
-            (buffer[len‑1] == '\r' || buffer[len‑1] == '\n')) {
-            buffer[--len] = '\0';
-            }
+    if (!data) return;
 
-        
-        // compare to exactly "Complete"
-        if (strcmp(data, "Complete") == 0 ) {
-            // buffer is exactly "Complete"
-            printf("rotation/movement mechanical done\n");
-        }
-        else if (strcmp(data, "Error") == 0) {
-            // buffer is exactly "Error"
-            printf("Got an error signal.\n");
-        }
-        else {
-            // something else
-            printf("Received something else: %s\n", data);
-        }
+    // strip any trailing '\r' or '\n'
+    size_t len = strlen(data);
+    while (len > 0 && (data[len-1] == '\r' || data[len-1] == '\n')) {
+        data[--len] = '\0';
     }
 
+    // only compare the first 8 bytes to "Complete"
+    if (strncmp(data, "complete", 8) == 0) {
+        printf("rotation/movement mechanical done\n");
+    }
+    // only compare the first 5 bytes to "Error"
+    else if (strncmp(data, "Error", 5) == 0) {
+        printf("Got an error signal.\n");
+    }
+    else {
+        printf("Received something else: %s\n", data);
+    }
 }
 
 
@@ -129,7 +123,14 @@ char* uart_read(int fd) {
 }
 //gcc -o W UART_Comms.c  -l wiringPi
 
-/*Coordinate common[] = {//usage:    movexy(common[idx].x, common[idx].y);
+
+
+typedef struct {
+    double x;
+    double y;
+} Coordinate;
+ 
+Coordinate common[] = {//usage:    movexy(common[idx].x, common[idx].y);
     {86.5, 7.5},//below upper stud[0]
     {86.5, 37.0},//above lower stud[1]
     {83.0, 6.0},//left upper stud[2]
@@ -142,7 +143,7 @@ char* uart_read(int fd) {
 	{26.5, 3},//G box centre [9]
 	{31, 38.5}//home point[10]
 };
-
+/*
 
 cd J_Files
 gcc -o W UART_Comms.c  -l wiringPi
@@ -161,10 +162,16 @@ int main() {
     }
     configure_uart(uart_fd);
 
-    movexy(28, 30);
+    while(1){
+    // start one edge to the left
+movexy(common[10].x - 10, common[10].y);
+// then down
+movexy(common[10].x, common[10].y - 10);
+
     //runEdgeCaseTests();
-    rotate(180);
-    rotate(-180);
+   // rotate(180);
+   // rotate(-180);
+}
 
     close(uart_fd);
     return 0;
