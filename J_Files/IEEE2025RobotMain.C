@@ -326,86 +326,7 @@ void* data_work(void* arg) {//current setup:
     return NULL;
 }
 
-/*
-old state machine in data work:
 
-void* data_work(void* arg) {
-    while (running) {
-        if (trigger_threads) {
-            //temporary silenced for testing parallelism
-            pthread_mutex_lock(&print_mutex);
-            printf("Thread 4 (Data) active! Working on assigned tasks!\n");
-            pthread_mutex_unlock(&print_mutex);
-
-            while (running) {
-                switch (State) {
-                    case 1: //Calibration State, motors are moved to check if they are working properly from the raspberry pi
-                        pthread_mutex_lock(&motor_mutex);
-                        MotorCall = 1;
-                        delay(3000);
-                        MotorCall = 2;
-                        delay(3000);
-                        MotorCall = 3;
-                        delay(3000);
-                        MotorCall = 4;
-                        delay(3000);
-                        MotorCall = 5;
-                        delay(3000);
-                        pthread_mutex_unlock(&motor_mutex);
-                        State = 2;
-                        break;
-                    case 2: //Start Signal State, awaiting for the arduino to be triggered by a photoresistor to tell if its alright for it to start!
-                        //int Ard_Start;
-                        //do {
-                            //Ard_Start = uart_read(uart_fd);
-                        //} while (!Ard_Start && running);
-                        //State = (Ard_Start == 1) ? 3 : 7;
-                       // break;
-                    case 3: //Outside of Cave State, the brush motor should always be active!
-                        pthread_mutex_lock(&motor_mutex);
-                        MotorCall = 1;
-                        pthread_mutex_unlock(&motor_mutex);
-                        break;
-                    case 4: //Inside of Cave State, the brush motor should always be active!
-                        pthread_mutex_lock(&motor_mutex);
-                        MotorCall = 1;
-                        pthread_mutex_unlock(&motor_mutex);
-                        break;
-                    case 5: //Loader Operation State, should raise then lower the motor
-                        pthread_mutex_lock(&motor_mutex);
-                        MotorCall = 4;
-                        usleep(1500000);
-                        MotorCall = 5;
-                        usleep(1500000);
-                        MotorCall = 1;
-                        pthread_mutex_unlock(&motor_mutex);
-                        break;
-                    case 6: //Sorting Operation State, should work the step and screw sorting operation state
-                        pthread_mutex_lock(&motor_mutex);
-                        MotorCall = 2;
-                        usleep(4000000);
-                        MotorCall = 3;
-                        usleep(4000000);
-                        MotorCall = 0;
-                        pthread_mutex_unlock(&motor_mutex);
-                        break;
-                    case 7:
-                        State = 5;
-                        break;
-                    default:
-                        State = 0;
-                        Inert_State();
-                        break;
-                }
-                usleep(50000);
-            }
-        }
-    }
-    return NULL;
-}
-
-
-*/
 //gcc -o W IEEE2025RobotMain.C  -l wiringPi  $(python3-config --cflags --embed --libs)
 
 //this doesnt really need mutexes but a way to silence the output
@@ -833,7 +754,7 @@ int main(void) {
     //Py_Initialize();
 
 
-    printf("opening uart");
+    printf("opening uart\n");
     // Open UART connection
     uart_fd = open(UART_PORT, O_RDWR | O_NOCTTY);
     if (uart_fd == -1) {
@@ -842,7 +763,7 @@ int main(void) {
     }
     configure_uart(uart_fd);
 
-    printf("uart configured.");
+    printf("uart configured.\n");
     
     // Create threads
     pthread_t thrd_1, thrd_2, thrd_3, thrd_4;
