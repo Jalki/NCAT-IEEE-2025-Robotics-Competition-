@@ -23,7 +23,7 @@ int Screw_Motor_State = 0;
 int Loader_Raise_State = 0;
 int Loader_Lower_State = 0;
 
-void setup()
+void auxmotorssetup()
 {
     // Set motor control pins to output
     pinMode(Brush_Motor, OUTPUT);
@@ -140,6 +140,7 @@ void TurnOffMotors() {
     printf("All motors turned OFF\n");
 }
 
+/*
 int load(void)
 {
     if (wiringPiSetupGpio() == -1) { // Use BCM pin numbering
@@ -164,3 +165,4 @@ int load(void)
 
     return 0;
 }
+    */

@@ -495,9 +495,12 @@ int balldetect(const char *filename, int *last_count) {
 void waitForLight() {
     printf("State: Wait For Light\n");
     initalizemovement();
+    auxmotorssetup();
     // Insert sensor logic to wait for a light trigger here.
     sleep(2);
 //start motor sequence
+
+/*
 MotorCall = 1;
 sleep(2);
 MotorCall = 0;
@@ -523,7 +526,7 @@ sleep(2);
 MotorCall = 0;
 sleep(2);
 //end motor sequence
-
+*/
 }
 
 /*Coordinate common[] = {//usage:    movexy(common[idx].x, common[idx].y);
@@ -554,6 +557,9 @@ void outsideSweep() {
 	prepareclearance('S', 'W'); //automatically point west w/ clearance work
 	
 	movexy(17, getrobotparams()[1]); //move left of N box at current y coordinate
+    overridequick('o', 1);
+    movexy(17, getrobotparams()[1]); //move left of N box at current y coordinate
+    prepareclearance('S', 'N');
 	movexy(17, 6);//clear left of N box upwards
     overridexy(17, 38.5, "y");
 	movexy(common[10].x, common[10].y);//go home [should go y-x]
@@ -603,9 +609,39 @@ void outsideSweep() {
 	printf("END OF INITIAL SWEEP");
 	
 }
-void unloadSortBins() {
+/*Coordinate common[] = {//usage:    movexy(common[idx].x, common[idx].y);
+    {86.5, 7.5},//below upper stud[0]
+    {86.5, 37.0},//above lower stud[1]
+    {83.0, 6.0},//left upper stud[2]
+    {83.0, 38.5},//left lower stud[3]
+    {68.0, 6.0},//upper left corner in cave[4]
+    {68.0, 38.5},//lower left corner[5]
+    {48.5, 6.0},//upper right corner out cave[6]
+    {42.0, 38.0},//left 'G' box[7]
+    {48.5, 32.0},//above 'G' box[8]
+	{26.5, 3},//G box centre [9]
+	{31, 38.5}//home point[10]
+    { 6.0,  6.0},  // upper left corner[11]
+    { 6.0, 38.5},  // lower left corner[12]
+};
+*/
+void unloadSortBins(const char *prelocation) {
     printf("State: Unload and Sort to Bins\n");
     // Insert code for unloading and sorting into bins here.
+    if (strcmp(prelocation, "i") == 0) {
+        overridequick('i', 1);
+    }
+    else if(strcomp(prelocation, "o")==0) {
+        overridequick('o', 4);
+    }
+
+    aligncave();
+
+    movexy(common[10].x,common[10].y);
+    prepareclearance('S', 'N');//point north if not already
+    overridexy(common[7].x,common[7].y, "x");
+    
+
     sleep(2);
 }
 
