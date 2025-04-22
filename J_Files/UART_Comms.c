@@ -303,3 +303,61 @@ int rotate(double angle) {
 }
 
 //gcc -o W UART_Comms.c  -l wiringPi
+
+int overridexy(double target_x, double target_y, const char *ApplyAxis) {
+    // 1) execute the move unconditionally
+    int result = moverobotxy(target_x, target_y);//allow to reach target
+    if (result) {
+
+        // 2) pull out the recorded deltas
+        double *mvDeltas = getdeltas();  // mvDeltas[0] = dx, [1] = dy, [2] = primary axis (stored as ASCII)
+        double dx =  ((mvDeltas[0] > 0) - (mvDeltas[0] < 0)) * 5.0; //get sign of x of magnitude 5
+        double dy =  (( mvDeltas[1] > 0) - ( mvDeltas[1] < 0)) * 5.0; //get sign of y of magnitude 5
+        char primary = 'x'; //the order is irrelevant--the robot is being moved in the same motions to a corner
+
+        if (strcmp(ApplyAxis "y") == 0) {
+            dx = 0;
+        }
+        else if (strcmp(ApplyAxis, "x") == 0) {
+            dy=0;
+        }
+        else if (strcmp(ApplyAxis, "xy") == 0) {
+            printf("overridexy: Choosing to translate in both axis of general direction\n");
+        }
+
+        printf("overridexy: dx = %.4f in, dy = %.4f in, primary axis = %c\n",
+            dx, dy, primary);
+
+        // 3) dispatch over UART exactly like movexy does
+        if (primary == 'x') {
+            // first the x‑step
+            uart_direction_Write(uart_fd, dx, 0.0, 0.0);
+            polluart();
+
+            // then the y‑step
+            uart_direction_Write(uart_fd, 0.0, dy, 0.0);
+            polluart();
+        }
+        else if (primary == 'y') {
+            // first the y‑step
+            uart_direction_Write(uart_fd, 0.0, dy, 0.0);
+            polluart();
+
+            // then the x‑step
+            uart_direction_Write(uart_fd, dx, 0.0, 0.0);
+            polluart();
+        }
+        else {
+            // fallback if somehow no primary axis was recorded
+            uart_direction_Write(uart_fd, dx, dy, 0.0);
+            polluart();
+        }
+
+    }
+
+    else {printf("overridexy: Robot MUST be in a position to move here to do an override. (because it moves in the general direction of the destination)\n")
+    
+    }
+    // always report “success” (no safety net here)
+    return 1;
+}

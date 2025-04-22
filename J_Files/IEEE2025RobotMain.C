@@ -69,8 +69,9 @@ Coordinate common[] = {//usage:    movexy(common[idx].x, common[idx].y);
     {48.5, 32.0},//above 'G' box[8]
 	{26.5, 3},//G box centre [9]
 	{31, 38.5}//home point[10]
-};
-
+    { 6.0,  6.0},  // upper left corner[11]
+    { 6.0, 38.5}  // lower left corner[12]
+}
 
 //int State = 1; no longer used
 int user;
@@ -95,6 +96,8 @@ void goHome();
 int balldetect(const char *filename, int *last_count);
 int prepareclearance(char borderdir, char facingfinaldirection);
 int point(char targetDir);
+void overridequick(char mode, int idx);
+
 //The usleep() function in C suspends execution of the calling thread for the number of microseconds specified in its argument.
 //It's part of the unistd.h header and is used for introducing short delays in a program's execution.
 
@@ -535,6 +538,8 @@ sleep(2);
     {48.5, 32.0},//above 'G' box[8]
 	{26.5, 3},//G box centre [9]
 	{31, 38.5}//home point[10]
+    { 6.0,  6.0},  // upper left corner[11]
+    { 6.0, 38.5},  // lower left corner[12]
 };
 */
 //gcc -o W IEEE2025RobotMain.C  -l wiringPi  $(python3-config --cflags --embed --libs)
@@ -544,18 +549,20 @@ void outsideSweep() {
 	
 	movexy(26.5, params[1]);// [this is a crafty way of translating only by one axis, keep this in mind]
 	movexy(26.5,12.5);//validate this position--below box
+    overridexy(26.5, 38.5, "y");
 	movexy(common[10].x, common[10].y);//home
 	prepareclearance('S', 'W'); //automatically point west w/ clearance work
 	
 	movexy(17, getrobotparams()[1]); //move left of N box at current y coordinate
 	movexy(17, 6);//clear left of N box upwards
+    overridexy(17, 38.5, "y");
 	movexy(common[10].x, common[10].y);//go home [should go y-x]
 	prepareclearance('S', 'E');//point towards G box
 	//direction: E
-	movexy(common[7].x, common[7].y);//left of G box [pass]
+	overridexy(common[7].x, common[7].y, "x");//left of G box [pass]
 	movexy(common[10].x, common[10].y);//home
 	movexy(getrobotparams()[0], common[8].y);//going up above G box
-	movexy(common[8].x, common[8].y);//above G box
+	overridexy(common[8].x, common[8].y, "x");//above G box
 	//uncertain movements
 	//at this point, the unimplemented box clawing action can go here, the rest of the code 
 	//mostly unchanged
@@ -564,7 +571,7 @@ void outsideSweep() {
 	//assumption: robot is above G box
 	movexy(common[8].x - 3, getrobotparams()[1]);//give clearance on E [pass]
 	prepareclearance('S', 'N');//prepare for pseudo sweep pointing north
-	movexy(36, getrobotparams()[1]); //GENIUS way of once again taking advantage of predetermined coords
+	overridexy(36, getrobotparams()[1], "x"); //GENIUS way of once again taking advantage of predetermined coords
 	
     printf("START OF INITIAL SWEEP");
 	double oldy = getrobotparams()[1];
@@ -574,13 +581,13 @@ void outsideSweep() {
 	{
 		
 		if (ballexist){
-			movexy(getrobotparams()[0], 6);
+			overridexy(getrobotparams()[0], 6, "y");
 			sleep(3);
-			movexy(getrobotparams()[0], oldy);
+			overridexy(getrobotparams()[0], oldy, "y");
 		}
         if ((maxpos - getrobotparams()[0]) <= 6 && (maxpos != getrobotparams()[0])){//horizontal adaptative movement towards right wall
             double currposx = getrobotparams()[0];
-            movexy(currposx + (maxpos - currposx), oldy);
+            overridexy(currposx + (maxpos - currposx), oldy, "x");//override only b.c its expected to ram into a wall
         } else if ((maxpos - getrobotparams()[0]) > 6){
            // printf("maxpos = %.2f, current X position = %.2f\n", maxpos, params[0]);
             movexy(getrobotparams()[0]+6, oldy);
@@ -905,4 +912,27 @@ int main(void) {
     //Py_Finalize();
 
     return 0;
+}
+
+void overridequick(char mode, int idx) {
+    int mapIdx = -1;
+    if (mode == 'o') {
+        switch (idx) {
+            case 1: mapIdx = 12; break;
+            case 2: mapIdx = 11; break;
+            case 3: mapIdx =  6; break;
+            case 4: mapIdx =  7; break;
+        }
+    }
+    else if (mode == 'i') {
+        switch (idx) {
+            case 1: mapIdx =  5; break;
+            case 2: mapIdx =  4; break;
+            case 3: mapIdx =  0; break;
+            case 4: mapIdx =  1; break;
+        }
+    }
+    if (mapIdx >= 0) {
+        overridexy(common[mapIdx].x, common[mapIdx].y, "xy");
+    }
 }
