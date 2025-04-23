@@ -68,10 +68,10 @@ Coordinate common[] = {//usage:    movexy(common[idx].x, common[idx].y);
     {42.0, 38.0},//left 'G' box[7]
     {48.5, 32.0},//above 'G' box[8]
 	{26.5, 3},//G box centre [9]
-	{31, 38.5}//home point[10]
+	{31, 38.5},//home point[10]
     { 6.0,  6.0},  // upper left corner[11]
     { 6.0, 38.5}  // lower left corner[12]
-}
+};
 
 //int State = 1; no longer used
 int user;
@@ -89,7 +89,7 @@ void* data_work(void* arg);
 // Function prototypes for each action
 void waitForLight();
 void outsideSweep();
-void unloadSortBins();
+void unloadSortBins(const char *prelocation);
 void prepCave();
 void caveSweep();
 void goHome();
@@ -187,75 +187,6 @@ void* actuators_work(void* arg) {
 }
 
 
-/*
-
-
-State currentState = WAIT_FOR_LIGHT;
-    // iteration == 0 indicates the first pass;
-    // iteration == 1 indicates the second pass through PREP_CAVE and UNLOAD_SORT
-    int iteration = 0;
-    bool running = true;
-
-    while (running) {
-        switch (currentState) {
-            case WAIT_FOR_LIGHT:
-                waitForLight();
-                currentState = OUTSIDE_SWEEP;
-                break;
-
-            case OUTSIDE_SWEEP:
-                outsideSweep();
-                currentState = UNLOAD_SORT;
-                break;
-
-            case UNLOAD_SORT:
-                unloadSortBins();
-                // In the first pass, after unloading we move to PREP_CAVE.
-                // In the second pass, after unloading we go home.
-                if (iteration == 0) {
-                    currentState = PREP_CAVE;
-                } else { // iteration == 1
-                    currentState = GO_HOME;
-                }
-                break;
-
-            case PREP_CAVE:
-                prepCave();
-                // In the first pass, after prepping, the next step is cave sweep.
-                // In the second pass, after prepping, the next step is unloading.
-                if (iteration == 0) {
-                    currentState = CAVE_SWEEP;
-                } else { // iteration == 1
-                    currentState = UNLOAD_SORT;
-                }
-                break;
-
-            case CAVE_SWEEP:
-                caveSweep();
-                // After the cave sweep, we begin the second cycle with PREP_CAVE.
-                iteration = 1;
-                currentState = PREP_CAVE;
-                break;
-
-            case GO_HOME:
-                goHome();
-                currentState = FINISHED;
-                break;
-
-            case FINISHED:
-                running = false;
-                break;
-        }
-        // Optional delay between states
-        sleep(1);
-    }
-    printf("State machine completed.\n");
-
-   
-   
-    */
-
-
 //new top level state machine to control the entire competition process
 
 void* data_work(void* arg) {//current setup:
@@ -284,7 +215,7 @@ void* data_work(void* arg) {//current setup:
                 break;
 
             case UNLOAD_SORT:
-                unloadSortBins();
+                unloadSortBins("o");
                 // In the first pass, after unloading we move to PREP_CAVE.
                 // In the second pass, after unloading we go home.
                 if (iteration == 0) {
@@ -417,6 +348,7 @@ gcc -o W IEEE2025RobotMain.C  -l wiringPi  $(python3-config --cflags --embed --l
 //this doesnt really need mutexes but a way to silence the output
 void* camera_work(void* arg) {
     // Initialize the Python interpreter.
+    while (running) {
     Py_Initialize();
 
     // Open the Python script file.
@@ -437,6 +369,7 @@ void* camera_work(void* arg) {
     Py_Finalize();
 
     return NULL;
+    }
 }
 //This function is the thread dedicated to operating sensors
 void* sensors_work(void* arg)
@@ -495,12 +428,32 @@ int balldetect(const char *filename, int *last_count) {
 void waitForLight() {
     printf("State: Wait For Light\n");
     initalizemovement();
-    auxmotorssetup();
+    setup();
+    while(running){
+
+        if (ballexist) {
+
+        prepareclearance('S','W');
+        prepareclearance('S', 'N');
+        }
+
+        movexy(common[10].x-5,common[10].y);
+        sleep(10);
+        if (ballexist) {
+
+        prepareclearance('S','W');
+        prepareclearance('S', 'N');
+        }
+        movexy(common[10].x+5,common[10].y);
+        sleep(10);
+        
+    }
+    /**
     // Insert sensor logic to wait for a light trigger here.
     sleep(2);
 //start motor sequence
 
-/*
+
 MotorCall = 1;
 sleep(2);
 MotorCall = 0;
@@ -545,7 +498,7 @@ sleep(2);
     { 6.0, 38.5},  // lower left corner[12]
 };
 */
-//gcc -o W IEEE2025RobotMain.C  -l wiringPi  $(python3-config --cflags --embed --libs)
+
 void outsideSweep() {
     
 	double *params = getrobotparams();// only current on first call
@@ -631,7 +584,7 @@ void unloadSortBins(const char *prelocation) {
     if (strcmp(prelocation, "i") == 0) {
         overridequick('i', 1);
     }
-    else if(strcomp(prelocation, "o")==0) {
+    else if(strcmp(prelocation, "o")==0) {
         overridequick('o', 4);
     }
 

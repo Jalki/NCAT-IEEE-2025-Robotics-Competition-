@@ -121,7 +121,7 @@ char* uart_read(int fd) {
     
     return buffer;
 }
-//gcc -o W UART_Comms.c  -l wiringPi
+
 
 
 
@@ -133,7 +133,30 @@ gcc -o W UART_Comms.c  -l wiringPi
 ./W
 
 */
-/*
+// Define a structure for a coordinate pair
+
+/*   quick main deacticvation/reactivaqtion
+typedef struct {
+    double x;
+    double y;
+} Coordinate;
+
+
+Coordinate common[] = {//usage:    movexy(common[idx].x, common[idx].y);
+    {86.5, 7.5},//below upper stud[0]
+    {86.5, 37.0},//above lower stud[1]
+    {83.0, 6.0},//left upper stud[2]
+    {83.0, 38.5},//left lower stud[3]
+    {68.0, 6.0},//upper left corner in cave[4]
+    {68.0, 38.5},//lower left corner[5]
+    {48.5, 6.0},//upper right corner out cave[6]
+    {42.0, 38.0},//left 'G' box[7]
+    {48.5, 32.0},//above 'G' box[8]
+	{26.5, 3},//G box centre [9]
+	{31, 38.5},//home point[10]
+    { 6.0,  6.0},  // upper left corner[11]
+    { 6.0, 38.5}  // lower left corner[12]
+};
 int main() {
     initalizemovement();
     
@@ -147,12 +170,16 @@ int main() {
 
 
 // then down
-movexy(common[10].x-10, common[10].y);
 
     //runEdgeCaseTests();
    // rotate(180);
    // rotate(-180);
+    while(1){
 
+        movexy(common[10].x+5,common[10].y+5);
+        movexy(common[10].x-5,common[10].y-5);
+        movexy(common[10].x,common[10].y);
+    }
 
     close(uart_fd);
     return 0;
@@ -302,7 +329,6 @@ int rotate(double angle) {
     return 1;
 }
 
-//gcc -o W UART_Comms.c  -l wiringPi
 
 int overridexy(double target_x, double target_y, const char *ApplyAxis) {
     // 1) execute the move unconditionally
@@ -356,7 +382,7 @@ int overridexy(double target_x, double target_y, const char *ApplyAxis) {
 
     }
 
-    else {printf("overridexy: Robot MUST be in a position to move here to do an override. (because it moves in the general direction of the destination)\n")
+    else {printf("overridexy: Robot MUST be in a position to move here to do an override. (because it moves in the general direction of the destination)\n");
     
     }
     // always report “success” (no safety net here)
