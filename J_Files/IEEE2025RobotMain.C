@@ -70,7 +70,10 @@ Coordinate common[] = {//usage:    movexy(common[idx].x, common[idx].y);
 	{26.5, 3},//G box centre [9]
 	{31, 38.5},//home point[10]
     { 6.0,  6.0},  // upper left corner[11]
-    { 6.0, 38.5}  // lower left corner[12]
+    { 6.0, 38.5},  // lower left corner[12]
+    {17,6},//left upper box [13]
+    {23,12.5}, //below upper box [14]
+    {36,6}, //right upper box [15]
 };
 
 //int State = 1; no longer used
@@ -109,39 +112,43 @@ void handle_sigint(int sig) {
 
 // Initial state function for selecting testing functions
 void Inert_State() {
-    printf("Raspberry Pi is in inert state \n");
+    int user;
+    printf("Raspberry Pi is in inert state\n");
     printf("Which testing function do you wish to do?\n");
-    printf("     1) Camera, 2) IR Tracking, 3) Photoresistor, 4) Motor Test, 5) Sorting Test, 6) Multithreading Testing, 7) Unit Test\n");
+    printf("     1) Camera\n");
+    printf("     2) Motor Test\n");
+    printf("     3) Sorting Test\n");
+    printf("     4) Multithreading Testing\n");
+    printf("     5) ROBOT PROCESS\n");
     printf("     Type here: ");
     scanf("%d", &user);
+
     switch (user) {
         case 1:
-            printf("~STARTING~ \n");
-            running = 1;
-            currentState = WAIT_FOR_LIGHT;
+            printf("~STARTING Camera~\n");
+
             break;
         case 2:
-            printf("~Testing IR Tracking~ \n");
+            printf("~Testing Motor Test~\n");
             break;
         case 3:
-            printf("~Testing Photoresistor~ \n");
+            printf("~Testing Sorting Test~\n");
             break;
         case 4:
-            printf("~Testing Motor Test~ \n");
+            printf("~Testing Multithreading Testing~\n");
             break;
         case 5:
-            printf("~Testing Sorting Test~ \n");
-            break;
-        case 6:
-            printf("~Testing Multithreading Testing~ \n");
-            break;
-        case 7:
-            printf("~Testing Unit Test~ \n");
+            printf("~Running Routine.t~\n");
+            running      = 1;
+            currentState = WAIT_FOR_LIGHT;
+
             break;
         default:
+            printf("Invalid selection.\n");
             break;
     }
 }
+
 
 // Thread function for actuator operations
 void* actuators_work(void* arg) {
@@ -482,7 +489,8 @@ sleep(2);
 */
 }
 
-/*Coordinate common[] = {//usage:    movexy(common[idx].x, common[idx].y);
+/*
+Coordinate common[] = {//usage:    movexy(common[idx].x, common[idx].y);
     {86.5, 7.5},//below upper stud[0]
     {86.5, 37.0},//above lower stud[1]
     {83.0, 6.0},//left upper stud[2]
@@ -493,45 +501,53 @@ sleep(2);
     {42.0, 38.0},//left 'G' box[7]
     {48.5, 32.0},//above 'G' box[8]
 	{26.5, 3},//G box centre [9]
-	{31, 38.5}//home point[10]
+	{31, 38.5},//home point[10]
     { 6.0,  6.0},  // upper left corner[11]
     { 6.0, 38.5},  // lower left corner[12]
+    {17,6},//left upper box [13]
+    {23,12.5}, //below upper box [14]
+    {36,6}, //right upper box [15]
 };
+
+
 */
 
 void outsideSweep() {
     
 	double *params = getrobotparams();// only current on first call
 	
+    //TODO: insert brush roller enable here
+
 	movexy(26.5, params[1]);// [this is a crafty way of translating only by one axis, keep this in mind]
+    //move under centre of N box
 	movexy(26.5,12.5);//validate this position--below box
-    overridexy(26.5, 38.5, "y");
+    overridexy(26.5, 38.5, "y");//jostle x-centre wrt n box to lower border
 	movexy(common[10].x, common[10].y);//home
 	prepareclearance('S', 'W'); //automatically point west w/ clearance work
 	
-	movexy(17, getrobotparams()[1]); //move left of N box at current y coordinate
-    overridequick('o', 1);
-    movexy(17, getrobotparams()[1]); //move left of N box at current y coordinate
-    prepareclearance('S', 'N');
-	movexy(17, 6);//clear left of N box upwards
-    overridexy(17, 38.5, "y");
+	movexy(common[12].x,common[12].y); //clear left side of home->corner
+    overridequick('o', 1);//realign any minor drift [this is drift axis optimized]
+    movexy(common[13].x, getrobotparams()[1]+1); //move left of N box at current y coordinate
+    prepareclearance('S', 'N');//point north at border
+    overridexy(common[13].x, 38.5, "y");//ensure robot is flush lower wall
+	movexy(common[13].x, common[13].y);//clear left of N box upwards
+    //we have cleared left of n box, below it, and left of home.
+
+    overridexy(common[13].x, 38.5, "y");//ensure robot is again flush with lower wall
 	movexy(common[10].x, common[10].y);//go home [should go y-x]
 	prepareclearance('S', 'E');//point towards G box
 	//direction: E
-	overridexy(common[7].x, common[7].y, "x");//left of G box [pass]
+	overridexy(common[7].x, common[7].y, "x");//left of G box [pass],jostle to it also
 	movexy(common[10].x, common[10].y);//home
-	movexy(getrobotparams()[0], common[8].y);//going up above G box
-	overridexy(common[8].x, common[8].y, "x");//above G box
-	//uncertain movements
-	//at this point, the unimplemented box clawing action can go here, the rest of the code 
-	//mostly unchanged
-	
-	//current incomplete implement trial
+	movexy(getrobotparams()[0], common[8].y);//going up above G box.
+    //home x centrered,  on y-height above G box, we will clear this row summarily
+	overridexy(common[8].x, common[8].y, "x");//above G box, jostle to r wall.
+
 	//assumption: robot is above G box
-	movexy(common[8].x - 3, getrobotparams()[1]);//give clearance on E [pass]
+	movexy(common[8].x - 3, getrobotparams()[1]);//move away from R wall, maintain y
 	prepareclearance('S', 'N');//prepare for pseudo sweep pointing north
-	overridexy(36, getrobotparams()[1], "x"); //GENIUS way of once again taking advantage of predetermined coords
-	
+	overridexy(common[15].x, getrobotparams()[1], "x"); //GENIUS way of once again taking advantage of predetermined coords
+	//this is right stide, x-aligned wrt N box, and y-aligned above G box
     printf("START OF INITIAL SWEEP");
 	double oldy = getrobotparams()[1];
 	double maxpos = 48.5;
@@ -539,10 +555,10 @@ void outsideSweep() {
 	while (getrobotparams()[0] <= maxpos && running)//start YOLO oabject detection concurrency test
 	{
 		
-		if (ballexist){
-			overridexy(getrobotparams()[0], 6, "y");
+		if (ballexist){//complete sweep: use ! conditional [w/o camera or parts]
+			overridexy(getrobotparams()[0], 6, "y");//automatically jostle for drifting
 			sleep(3);
-			overridexy(getrobotparams()[0], oldy, "y");
+			movexy(getrobotparams()[0], oldy);//do not jostle, this will misalign
 		}
         if ((maxpos - getrobotparams()[0]) <= 6 && (maxpos != getrobotparams()[0])){//horizontal adaptative movement towards right wall
             double currposx = getrobotparams()[0];
@@ -573,27 +589,46 @@ void outsideSweep() {
     {42.0, 38.0},//left 'G' box[7]
     {48.5, 32.0},//above 'G' box[8]
 	{26.5, 3},//G box centre [9]
-	{31, 38.5}//home point[10]
+	{31, 38.5},//home point[10]
     { 6.0,  6.0},  // upper left corner[11]
     { 6.0, 38.5},  // lower left corner[12]
+    {17,6},//left upper box [13]
+    {20,18}, //below upper box [14]
+    {29,18}, //right upper box [15]
 };
+
 */
 void unloadSortBins(const char *prelocation) {
+    //keep in mind to try to keep this simple as we are doing this twice
     printf("State: Unload and Sort to Bins\n");
     // Insert code for unloading and sorting into bins here.
     if (strcmp(prelocation, "i") == 0) {
-        overridequick('i', 1);
+        overridequick('i', 1);//jostle lower left corner of cave
+        movexy(common[5].x+3, common[5].y);//move over 3 units
+        prepareclearance('S', 'N');//point n if not already
     }
     else if(strcmp(prelocation, "o")==0) {
-        overridequick('o', 4);
+        movexy(common[10].x, common[10].y);//move to home
+        prepareclearance('S', 'N');//prepare to point north
+        overridequick('o', 4);//jostle left of G box
+        
     }
 
     aligncave();
+    movexy(common[6].x-4, common[6].y);//get drift correction to a common corner
+    overridexy(common[6].x, common[6].y, "x");
 
-    movexy(common[10].x,common[10].y);
-    prepareclearance('S', 'N');//point north if not already
-    overridexy(common[7].x,common[7].y, "x");
-    
+    aligncave();
+    point('W');//point west for N box
+    movexy(common[14].x, common[14].y);//move next to N box to unload
+ 
+    //TODO: insert, the loader up, loader down, off brush rolker,
+    //start sorting mechanism for G container
+    overridexy(common[10].x, common[10].y, "y"); //jostle towards home
+    prepareclearance('S', 'N');//point north to unload
+    overridexy(common[7].x, common[7].y, "x");
+    //todo: ONLY do G box sorting. everything is unloaded already.
+
 
     sleep(2);
 }
@@ -628,18 +663,19 @@ void caveSweep() {
    as a result, this is depicted in a while loop
    */
     
-    double oldy = getrobotparams()[1];
+    aligncave();
+    double oldy = getrobotparams()[1];//basically cave aligned y value
 
-    moverobotxy(common[4].x, oldy);
+    moverobotxy(common[4].x, oldy);//cave y aligned, move towards xaligned #4 zone
 
 
-    double oldx = getrobotparams()[0];
+    double oldx = getrobotparams()[0];//x aligned wrt zone #4
     double Xmaxpos = 86.5;
 
-    point('E');
-    moverobotxy(Xmaxpos, oldy);
-    moverobotxy(oldx, oldy);
-    point('N');
+    point('E');//point right
+    overridexy(Xmaxpos, oldy, "x");//shovel towards right wall, jostling it
+    moverobotxy(oldx, oldy);//return to old position below zone 4, cave aligned
+    point('N');//restore original orientation
 
 
     while (getrobotparams()[0] <= Xmaxpos && running)//start YOLO oabject detection concurrency test4
@@ -647,9 +683,9 @@ void caveSweep() {
     {
         
         if (ballexist){//y axis movement upward only
-            moverobotxy(getrobotparams()[0], 6);
+            overridexy(getrobotparams()[0], 6, "y");//jostle against upper walls
             sleep(3);
-            moverobotxy(getrobotparams()[0], oldy);
+            movexy(getrobotparams()[0], oldy);//do not jostle
         }
 
         //at this point, the robot is in the y-centerline [or should be]
@@ -657,7 +693,7 @@ void caveSweep() {
         //begin southbound sweep
 
         if (ballexist){//y axis movement downward only
-            moverobotxy(getrobotparams()[0], 38.5);
+            overridexy(getrobotparams()[0], 38.5, "y");
             sleep(3);
             moverobotxy(getrobotparams()[0], oldy);
         }
@@ -680,10 +716,10 @@ void caveSweep() {
     }
 
     //at this point, we are very close to the end of the right side. there is only one set of movements to do
-    moverobotxy(Xmaxpos, oldy);
+    overridexy(Xmaxpos, oldy, "x");//jostle R wall
 
     if (ballexist){//y axis movement upward only
-        moverobotxy(getrobotparams()[0], common[0].y);
+        moverobotxy(getrobotparams()[0], common[0].y);//todo: robot WILL drift left
         sleep(3);
         moverobotxy(getrobotparams()[0], oldy);
     }
@@ -691,7 +727,8 @@ void caveSweep() {
     //at this point, the robot is in the y-centerline [or should be]
     //it should be noted that proper clearance is required--use the appropriate function instead
     prepareclearance('E', 'S');
-
+    overridexy(Xmaxpos, oldy, "x");//jostle R wall
+    
     //begin southbound sweep
 
     if (ballexist){//y axis movement downward only
@@ -922,6 +959,6 @@ void overridequick(char mode, int idx) {
         }
     }
     if (mapIdx >= 0) {
-        overridexy(common[mapIdx].x, common[mapIdx].y, "xy");
+        overridexy(common[mapIdx].x, common[mapIdx].y, "xy");//auto optimized movement for drift
     }
 }

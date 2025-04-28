@@ -129,10 +129,16 @@ void runEdgeCaseTests(void) {
 
     alignYcave();
 
-    printf("\n[TEST] Move right box.\n");
-    if (!moverobotxy(36,6)) {
-        printf("[ERROR] Could not get to right box.\n");
+    printf("\n[TEST] Move below.\n");
+    if (!moverobotxy(20,15.5)) {
+        printf("[ERROR] Could not get below box.\n");
     }
+    
+        printf("\n[TEST] Move right.\n");
+    if (!moverobotxy(23,6)) {
+        printf("[ERROR] Could not get right box.\n");
+    }
+
 
     //after a movement, a delta is recorded [a successful one]
 
@@ -187,7 +193,7 @@ void runEdgeCaseTests(void) {
 
         */
 
-
+/*
     // 2. Move to the “cave” area on the right side. Suppose the cave entrance is near x=80, y=20.
     //    (Adjust these coordinates to match your actual field.)
     printf("\n[TEST] Moving into the cave on the right side.\n");
@@ -281,7 +287,7 @@ void runEdgeCaseTests(void) {
     }
 
 
-
+*/
     printf("\n[TEST] Finished edge-case tests.\n");
 }
 
