@@ -358,20 +358,20 @@ int overridexy(double target_x, double target_y, const char *ApplyAxis) {
         // 3) dispatch over UART exactly like movexy does
         if (primary == 'x') {
             // first the x‑step
-            uart_direction_Write(uart_fd, dx, 0.0, 999.0);
+            uart_direction_Write(uart_fd, dx, 0.0, 9.0);
             polluart();
 
             // then the y‑step
-            uart_direction_Write(uart_fd, 0.0, dy, 999.0);
+            uart_direction_Write(uart_fd, 0.0, dy, 9.0;
             polluart();
         }
         else if (primary == 'y') {
             // first the y‑step
-            uart_direction_Write(uart_fd, 0.0, dy, 999.0);
+            uart_direction_Write(uart_fd, 0.0, dy, 9.0);
             polluart();
 
             // then the x‑step
-            uart_direction_Write(uart_fd, dx, 0.0, 999.0);
+            uart_direction_Write(uart_fd, dx, 0.0, 9.0);
             polluart();
         }
         else {
