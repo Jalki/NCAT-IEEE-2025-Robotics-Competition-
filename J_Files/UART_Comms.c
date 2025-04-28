@@ -24,6 +24,12 @@ int uart_fd = -1;  // Global UART file descriptor
 int movexy(double target_x, double target_y);
 int rotate(double angle);
 char* uart_read(int fd);
+void uart_direction_Write(int fd,
+    double x,
+    double y,
+    double rotation,
+    double aux);
+
 
 // Function to configure UART
 void configure_uart(int uart_fd) {
@@ -51,6 +57,18 @@ void configure_uart(int uart_fd) {
 void uart_direction_Write(int fd, double x, double y, double rotation) {
     char data[50];  // Buffer to hold formatted string
     snprintf(data, sizeof(data), "%.4f,%.4f,%.4f\n", x, y, rotation);
+    
+    int bytes_written = write(fd, data, strlen(data));
+    if (bytes_written < 0) {
+        perror("UART Write Error");
+    } else {
+        printf("Sent: %s", data);
+    }
+}
+
+void uart_direction_Write(int fd, double x, double y, double rotation, double aux) {
+    char data[50];  // Buffer to hold formatted string
+    snprintf(data, sizeof(data), "%.4f,%.4f,%.4f,%4f\n", x, y, rotation, aux);
     
     int bytes_written = write(fd, data, strlen(data));
     if (bytes_written < 0) {
@@ -135,7 +153,7 @@ gcc -o W UART_Comms.c  -l wiringPi
 */
 // Define a structure for a coordinate pair
 
-/*   quick main deacticvation/reactivaqtion
+   quick main deacticvation/reactivaqtion
 typedef struct {
     double x;
     double y;
@@ -176,16 +194,17 @@ int main() {
    // rotate(-180);
     while(1){
 
-        movexy(common[10].x+5,common[10].y+5);
-        movexy(common[10].x-5,common[10].y-5);
-        movexy(common[10].x,common[10].y);
+        sleep(10);
+        uart_direction_Write(uart_fd, 3.00, 0.00, 0.00,9.9);
+        sleep(10);
+        uart_direction_Write(uart_fd, -3.00, 0.00, 0.00,9.9);
     }
 
     close(uart_fd);
     return 0;
 }
 
-*/
+
 
 //Contributions by Arnold
 // New function: movexy()
