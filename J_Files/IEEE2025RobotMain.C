@@ -445,12 +445,15 @@ void waitForLight() {
     overridequick('o', 1);
     sleep(3);
     overridequick('o',2);
+    sleep(1);
+    aligncave();
     sleep(3);
     overridequick('o', 3);
     sleep(3);
     overridequick('o', 4);
-    sleep(3);
-        
+    sleep(1);
+    printf("END OF TEST");
+    sleep(10);
     }
     /**
     // Insert sensor logic to wait for a light trigger here.
