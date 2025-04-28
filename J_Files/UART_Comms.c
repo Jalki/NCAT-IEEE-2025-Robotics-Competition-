@@ -19,6 +19,8 @@ char newaccel[256];
 
 char buffer[256];
 int uart_fd = -1;  // Global UART file descriptor
+double overrideMag = 1.5;
+
 
 //Level 1 functions
 int movexy(double target_x, double target_y);
@@ -62,7 +64,7 @@ void uart_direction_Write(int fd, double x, double y, double rotation, int aux) 
     } else {
         printf("print alt uart\n");
 
-        snprintf(data, sizeof(data), "%.4f,%.4f,%.4f,%.4f\n", x, y, rotation,0.0);
+        snprintf(data, sizeof(data), "%.4f,%.4f,%.4f,%.4f\n", x, y, rotation, rotation);
     }
    
     
@@ -151,7 +153,7 @@ gcc -o W UART_Comms.c  -l wiringPi
 */
 // Define a structure for a coordinate pair
 
-   quick main deacticvation/reactivaqtion
+   /*
 typedef struct {
     double x;
     double y;
@@ -203,6 +205,8 @@ int main() {
 }
 
 
+
+*/
 
 //Contributions by Arnold
 // New function: movexy()
@@ -354,8 +358,8 @@ int overridexy(double target_x, double target_y, const char *ApplyAxis) {
 
         // 2) pull out the recorded deltas
         double *mvDeltas = getdeltas();  // mvDeltas[0] = dx, [1] = dy, [2] = primary axis (stored as ASCII)
-        double dx =  ((mvDeltas[0] > 0) - (mvDeltas[0] < 0)) * 3.0; //get sign of x of magnitude 3
-        double dy =  (( mvDeltas[1] > 0) - ( mvDeltas[1] < 0)) * 3.0; //get sign of y of magnitude 3
+        double dx =  ((mvDeltas[0] > 0) - (mvDeltas[0] < 0)) * overrideMag; //get sign of x of magnitude 3
+        double dy =  (( mvDeltas[1] > 0) - ( mvDeltas[1] < 0)) * overrideMag; //get sign of y of magnitude 3
         char primary = 'y'; //x final motions are more stable than y final motions
 
         if (strcmp(ApplyAxis, "y") == 0) {

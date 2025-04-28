@@ -438,21 +438,18 @@ void waitForLight() {
     setup();
     while(running){
 
-        if (ballexist) {
-
-        prepareclearance('S','W');
-        prepareclearance('S', 'N');
-        }
-
-        movexy(common[10].x-5,common[10].y);
-        sleep(10);
-        if (ballexist) {
-
-        prepareclearance('S','W');
-        prepareclearance('S', 'N');
-        }
-        movexy(common[10].x+5,common[10].y);
-        sleep(10);
+    overridexy(common[10].x-5, common[10].y+5, "x");
+    sleep(3);
+    override(common[10].x, common[10].y, "y");
+    sleep(3);
+    overridequick('o', 1);
+    sleep(3);
+    overridequick('o',2);
+    sleep(3);
+    overridequick('o', 3);
+    sleep(3);
+    overridequick('o', 4);
+    sleep(3);
         
     }
     /**
@@ -672,7 +669,7 @@ void caveSweep() {
     double oldx = getrobotparams()[0];//x aligned wrt zone #4
     double Xmaxpos = 86.5;
 
-    point('E');//point right
+    prepareclearance('W', 'E');//point right w left side precaution
     overridexy(Xmaxpos, oldy, "x");//shovel towards right wall, jostling it
     moverobotxy(oldx, oldy);//return to old position below zone 4, cave aligned
     point('N');//restore original orientation
