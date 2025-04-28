@@ -438,9 +438,9 @@ void waitForLight() {
     setup();
     while(running){
 
-    overridexy(common[10].x-5, common[10].y+5, "x");
-    sleep(3);
-    override(common[10].x, common[10].y, "y");
+   // overridexy(common[10].x-5, common[10].y+5, "x");
+    //sleep(3);
+   // overridexy(common[10].x, common[10].y, "y");
     sleep(3);
     overridequick('o', 1);
     sleep(3);
