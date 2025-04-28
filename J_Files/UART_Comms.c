@@ -28,7 +28,7 @@ void uart_direction_Write(int fd,
     double x,
     double y,
     double rotation,
-    double aux);
+    int aux);
 
 
 // Function to configure UART
@@ -54,9 +54,17 @@ void configure_uart(int uart_fd) {
 }
 
 // Function to send a float array as a comma-separated string
-void uart_direction_Write(int fd, double x, double y, double rotation) {
+void uart_direction_Write(int fd, double x, double y, double rotation, int aux) {
     char data[50];  // Buffer to hold formatted string
-    snprintf(data, sizeof(data), "%.4f,%.4f,%.4f\n", x, y, rotation);
+    if (aux == 1) {
+        snprintf(data, sizeof(data), "%.4f,%.4f,%.4f\n", x, y, rotation);
+
+    } else {
+        printf("print alt uart\n");
+
+        snprintf(data, sizeof(data), "%.4f,%.4f,%.4f,%.4f\n", x, y, rotation,0.0);
+    }
+   
     
     int bytes_written = write(fd, data, strlen(data));
     if (bytes_written < 0) {
@@ -66,17 +74,7 @@ void uart_direction_Write(int fd, double x, double y, double rotation) {
     }
 }
 
-void uart_direction_Write(int fd, double x, double y, double rotation, double aux) {
-    char data[50];  // Buffer to hold formatted string
-    snprintf(data, sizeof(data), "%.4f,%.4f,%.4f,%4f\n", x, y, rotation, aux);
-    
-    int bytes_written = write(fd, data, strlen(data));
-    if (bytes_written < 0) {
-        perror("UART Write Error");
-    } else {
-        printf("Sent: %s", data);
-    }
-}
+
 
 //Seperate function to actively write what state the robot is in!
 void uart_write_state(int fd, int State)
@@ -195,9 +193,9 @@ int main() {
     while(1){
 
         sleep(10);
-        uart_direction_Write(uart_fd, 3.00, 0.00, 0.00,9.9);
+        uart_direction_Write(uart_fd, 3.00, 0.00, 0.00,1);
         sleep(10);
-        uart_direction_Write(uart_fd, -3.00, 0.00, 0.00,9.9);
+        uart_direction_Write(uart_fd, -3.00, 0.00, 0.00, 0);
     }
 
     close(uart_fd);
@@ -227,13 +225,13 @@ int movexy(double target_x, double target_y) {
             // Code branch for primary x-axis movement.
             printf("movexy: Primary axis is X. [Insert x-axis processing code here]\n");//PARTICULARLY, UART
 
-            uart_direction_Write(uart_fd, dx, 0.00, 0.00);
+            uart_direction_Write(uart_fd, dx, 0.00, 0.00,1);
 
             polluart();
 
             printf("sending second set");
             
-            uart_direction_Write(uart_fd, 0.00, dy, 0.00);
+            uart_direction_Write(uart_fd, 0.00, dy, 0.00,1);
             polluart();
 
         }
@@ -241,12 +239,12 @@ int movexy(double target_x, double target_y) {
             // Code branch for primary y-axis movement.
             printf("movexy: Primary axis is Y. [Insert y-axis processing code here]\n");//PARTICULARLY, UART
 
-            uart_direction_Write(uart_fd, 0, dy, 0);
+            uart_direction_Write(uart_fd, 0, dy, 0,1);
 
             polluart();
 
             printf("sending second set");
-            uart_direction_Write(uart_fd, dx, 0, 0);
+            uart_direction_Write(uart_fd, dx, 0, 0,1);
             polluart();
 
 
@@ -284,7 +282,7 @@ int aligncave() {
             // Code branch for primary x-axis movement.
             printf("movexy: Primary axis is X. [Insert x-axis processing code here]\n");//PARTICULARLY, UART
 
-            uart_direction_Write(uart_fd, dx, 0.00, 0.00);
+            uart_direction_Write(uart_fd, dx, 0.00, 0.00,1);
 
             printf("entering while loop for align y");
             polluart();
@@ -293,18 +291,18 @@ int aligncave() {
             printf("sending second set");
             polluart();
 
-            uart_direction_Write(uart_fd, 0.00, dy, 0.00);
+            uart_direction_Write(uart_fd, 0.00, dy, 0.00,1);
         }
         else if (primary == 'y') {
             // Code branch for primary y-axis movement.
             printf("movexy: Primary axis is Y. [Insert y-axis processing code here]\n");//PARTICULARLY, UART
 
-            uart_direction_Write(uart_fd, 0, dy, 0);
+            uart_direction_Write(uart_fd, 0, dy, 0,1);
             printf("entering while loop pt2");
             polluart();
 
             printf("sending second set");
-            uart_direction_Write(uart_fd, dx, 0, 0);
+            uart_direction_Write(uart_fd, dx, 0, 0,1);
             polluart();
 
         }
@@ -341,7 +339,7 @@ int rotate(double angle) {
     if (aDelta != 0.0) {
         // [Insert any additional angle delta processing code here.]//PARTICULARLY, UART
         printf("rotate: Processing angle delta: %.2f degrees.\n", aDelta);
-        uart_direction_Write(uart_fd, 0, 0, aDelta);
+        uart_direction_Write(uart_fd, 0, 0, aDelta,1);
         polluart();
         
     }
@@ -377,25 +375,25 @@ int overridexy(double target_x, double target_y, const char *ApplyAxis) {
         // 3) dispatch over UART exactly like movexy does
         if (primary == 'x') {
             // first the x‑step
-            uart_direction_Write(uart_fd, dx, 0.0, 9.0);
+            uart_direction_Write(uart_fd, dx, 0.0, 0.0,0);
             polluart();
 
             // then the y‑step
-            uart_direction_Write(uart_fd, 0.0, dy, 9.0;
+            uart_direction_Write(uart_fd, 0.0, dy, 0.0, 0);
             polluart();
         }
         else if (primary == 'y') {
             // first the y‑step
-            uart_direction_Write(uart_fd, 0.0, dy, 9.0);
+            uart_direction_Write(uart_fd, 0.0, dy, 0.0, 0);
             polluart();
 
             // then the x‑step
-            uart_direction_Write(uart_fd, dx, 0.0, 9.0);
+            uart_direction_Write(uart_fd, dx, 0.0, 0.0, 0);
             polluart();
         }
         else {
             // fallback if somehow no primary axis was recorded
-            uart_direction_Write(uart_fd, dx, dy, 0.0);
+            uart_direction_Write(uart_fd, dx, dy, 0.0, 0);
             polluart();
         }
 
