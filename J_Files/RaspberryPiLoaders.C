@@ -191,7 +191,7 @@ void robotcmd(const char *cmd) {
         printf("CMD: sweep → Brush motor ON\n");
     }
     else if (strcmp(cmd, "raise") == 0) {
-        BrushOn();      // brush runs while raising
+       //brush on cuases huge volt drop, do manual sweep with raising after
         LoadRaiseOn();
         printf("CMD: raise → Brush + Loader Raise ON\n");
     }

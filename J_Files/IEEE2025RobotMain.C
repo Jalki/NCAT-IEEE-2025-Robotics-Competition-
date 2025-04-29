@@ -436,12 +436,25 @@ void waitForLight() {
     printf("State: Wait For Light\n");
     initalizemovement();
     setup();
+    loadcmd();
+
     while(running){
 
    // overridexy(common[10].x-5, common[10].y+5, "x");
     //sleep(3);
    // overridexy(common[10].x, common[10].y, "y");
+    robotcmd("lower");
+    sleep(5);
+    robotcmd("unloadG");
     sleep(3);
+    robotcmd("unloadN");
+    sleep(3);
+    robotcmd("raise");
+    sleep(5);
+    robotcmd("sweep");
+    sleep(3);
+    robotcmd("lower");
+    sleep(5);
     overridequick('o', 1);
     sleep(3);
     overridequick('o',2);
