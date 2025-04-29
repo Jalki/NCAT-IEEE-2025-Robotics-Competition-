@@ -23,6 +23,7 @@ int Screw_Motor_State = 0;
 int Loader_Raise_State = 0;
 int Loader_Lower_State = 0;
 
+
 void setup()
 {
     if (wiringPiSetupGpio() == -1) { // Use BCM pin numbering
@@ -146,15 +147,11 @@ void TurnOffMotors() {
 }
 
 
-int load(void)
+int loadcmd(void)
 {
-    if (wiringPiSetupGpio() == -1) { // Use BCM pin numbering
-        printf("WiringPi setup failed!\n");
-        return 1;
-    }
 
     setup();
-
+/*
     // Example usage
     BrushOn();  // Turn on Brush motor
     sleep(5);   // Keep it on for 5 seconds
@@ -167,7 +164,43 @@ int load(void)
     StepOn();   // Turn on Step motor
     sleep(3);   // Keep it on for 3 seconds
     TurnOffMotors(); // Turn off all motors
-
+*/
     return 0;
 }
     
+
+void robotcmd(const char *cmd) {
+    // first, shut everything down
+    TurnOffMotors();
+
+    // now selectively power up only the requested motor(s)
+    if (strcmp(cmd, "off") == 0) {
+        // already off
+        printf("CMD: all motors OFF\n");
+    }
+    else if (strcmp(cmd, "unloadG") == 0) {
+        StepOn();
+        printf("CMD: unloadmag → Step motor ON\n");
+    }
+    else if (strcmp(cmd, "unloadN") == 0) {
+        ScrewOn();
+        printf("CMD: unloadreg → Screw motor ON\n");
+    }
+    else if (strcmp(cmd, "sweep") == 0) {
+        BrushOn();
+        printf("CMD: sweep → Brush motor ON\n");
+    }
+    else if (strcmp(cmd, "raise") == 0) {
+        BrushOn();      // brush runs while raising
+        LoadRaiseOn();
+        printf("CMD: raise → Brush + Loader Raise ON\n");
+    }
+    else if (strcmp(cmd, "lower") == 0) {
+        LoadLowOn();
+        printf("CMD: lower → Loader Lower ON\n");
+    }
+    else {
+        // unrecognized command
+        printf("robotcmd: unknown command \"%s\"\n", cmd);
+    }
+}

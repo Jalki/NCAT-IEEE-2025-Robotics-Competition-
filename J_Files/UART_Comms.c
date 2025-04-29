@@ -360,9 +360,10 @@ int overridexy(double target_x, double target_y, const char *ApplyAxis) {
         double *mvDeltas = getdeltas();  // mvDeltas[0] = dx, [1] = dy, [2] = primary axis (stored as ASCII)
         double dxNorm = mvDeltas[0];
         double dyNorm= mvDeltas[1];
+
         double dx =  ((mvDeltas[0] > 0) - (mvDeltas[0] < 0)) * overrideMag; //get sign of x of magnitude 3
         double dy =  (( mvDeltas[1] > 0) - ( mvDeltas[1] < 0)) * overrideMag; //get sign of y of magnitude 3
-        char primary = 'y'; //x final motions are more stable than y final motions
+        char primary = (char) mvDeltas[2]; //x final motions are more stable than y final motions
 
         if (strcmp(ApplyAxis, "y") == 0) {
             dx = 0;
@@ -383,25 +384,28 @@ int overridexy(double target_x, double target_y, const char *ApplyAxis) {
             // first the x‑step, the real distance travel
             uart_direction_Write(uart_fd, dxNorm, 0.0, 0.0,1);// "1" stands for normal movement
             polluart();//wait vfor this to complete
-            uart_direction_Write(uart_fd, dx, 0.0, 0.0,0);
-            polluart();
-
             // then the y‑step
             uart_direction_Write(uart_fd, 0, dyNorm, 0.0,1);// "1" stands for normal movement
             polluart();//wait vfor this to complete
+
+
+            uart_direction_Write(uart_fd, dx, 0.0, 0.0,0);//do overrides after normal translation only
+            polluart();
             uart_direction_Write(uart_fd, 0.0, dy, 0.0, 0);
             polluart();
+
         }
         else if (primary == 'y') {
             // first the y‑step
             uart_direction_Write(uart_fd, 0, dyNorm, 0.0,1);// "1" stands for normal movement
             polluart();//wait vfor this to complete
-            uart_direction_Write(uart_fd, 0.0, dy, 0.0, 0);
-            polluart();
-
             // then the x‑step
             uart_direction_Write(uart_fd, dxNorm, 0.0, 0.0,1);// "1" stands for normal movement
             polluart();//wait vfor this to complete
+
+
+            uart_direction_Write(uart_fd, 0.0, dy, 0.0, 0);//do overrides after normal translation only
+            polluart();
             uart_direction_Write(uart_fd, dx, 0.0, 0.0, 0);
             polluart();
         }
