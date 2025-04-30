@@ -261,6 +261,7 @@ int movexy(double target_x, double target_y) {
     else {
         printf("movexy: Movement to target (%.2f, %.2f) failed.\n", target_x, target_y);
     }
+    sleep(3);
     return result;
 }
 
@@ -348,6 +349,7 @@ int rotate(double angle) {
         polluart();
         
     }
+    sleep(3);
     return 1;
 }
 
@@ -362,7 +364,7 @@ int overridexy(double target_x, double target_y, const char *ApplyAxis) {
         double dxNorm = mvDeltas[0];
         double dyNorm= mvDeltas[1];
 
-        double dx =  ((mvDeltas[0] > 0) - (mvDeltas[0] < 0)) * overrideMag; //get sign of x of magnitude 3
+        double dx =  ((mvDeltas[0] > 0) - (mvDeltas[0] < 0)) * (overrideMag/2); //get sign of x of magnitude 3
         double dy =  (( mvDeltas[1] > 0) - ( mvDeltas[1] < 0)) * overrideMag; //get sign of y of magnitude 3
         char primary = (char) mvDeltas[2]; //x final motions are more stable than y final motions
 

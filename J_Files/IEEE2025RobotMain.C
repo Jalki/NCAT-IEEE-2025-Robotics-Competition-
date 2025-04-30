@@ -449,74 +449,6 @@ void waitForLight() {
     setup();
     loadcmd();
 
- while(running){
-  //  measure();
-   movexy(common[10].x, common[10].y-10);
-//PASSSED
-
-
-   point('S');
-    sleep(2);
-    point('W');
-    sleep(2);
-    point('E');
-sleep(2);
-    point('N');
-    sleep(2);
-    movexy(common[10].x, common[10].y);
- }
-    
-   // overridexy(common[10].x-5, common[10].y+5, "x");
-    //sleep(3);
-   // overridexy(common[10].x, common[10].y, "y");
-
-   
-   //THIS SECTION HAS PASSED
-/*
-   
-    robotcmd("lower");
-    sleep(5);
-    robotcmd("unloadG");
-    sleep(3);
-    robotcmd("unloadN");
-    sleep(3);
-    robotcmd("raise");
-    sleep(5);
-    robotcmd("sweep");
-    sleep(3);
-    robotcmd("lower");
-    */
-
-    /*
-THIS SECTION HAS PASSED
-
-    movexy(common[10].x, common[10].y - 7);
-        sleep(5);
-        rotate(180);
-        sleep(5);
-        rotate(-180);
-    sleep(5);
-    movexy(common[10].x, common[10].y);
-
-    */
-   
-    
-    /* THIS SECTION HAS PASSED
-    overridequick('o', 1);
-    sleep(3);
-    overridequick('o',2);
-    sleep(1);
-    aligncave();
-    sleep(3);
-    overridequick('o', 3);
-    sleep(3);
-    overridequick('o', 4);
-    sleep(1);
-    
-    printf("END OF TEST");
-    sleep(10);
-    }
-*/
 
 
 printf("DONE TESTING");
@@ -527,13 +459,13 @@ void outsideSweep() {
 	double *params = getrobotparams();// only current on first call
 	
     //TODO: insert brush roller enable here
-
-	movexy(26.5, params[1]);// [this is a crafty way of translating only by one axis, keep this in mind]
-    //move under centre of N box
-	movexy(26.5,12.5);//validate this position--below box
-    overridexy(26.5, 38.5, "y");//jostle x-centre wrt n box to lower border
-	movexy(common[10].x, common[10].y);//home
-	prepareclearance('S', 'W'); //automatically point west w/ clearance work
+//LEGEND: * = PASSED, ** MODIFY BASED ON SUGGESTION, # = FAIL
+	movexy(26.5, params[1]);// [this is a crafty way of translating only by one axis, keep this in mind]*
+    //move under centre of N box*
+	movexy(26.5,12.5);//validate this position--below box** convert to override
+    overridexy(26.5, 38.5, "y");//jostle x-centre wrt n box to lower border*
+	movexy(common[10].x, common[10].y);//home*
+	prepareclearance('S', 'W'); //automatically point west w/ clearance work*
 	
 	movexy(common[12].x,common[12].y); //clear left side of home->corner
     overridequick('o', 1);//realign any minor drift [this is drift axis optimized]
