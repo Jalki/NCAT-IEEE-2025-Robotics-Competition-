@@ -443,14 +443,26 @@ void measure() {
     sleep(20);
 }
 
+void quad() {
+    movexy(common[10].x + 10, common[10].y);
+
+movexy(common[10].x, common[10].y);
+
+
+movexy(common[10].x, common[10].y - 10);
+
+movexy(common[10].x, common[10].y);
+
+}
 void waitForLight() {
     printf("State: Wait For Light\n");
     initalizemovement();
     setup();
     loadcmd();
 
-
-
+while (1) {
+    measure();
+}
 printf("DONE TESTING");
   // }
 }
