@@ -19,7 +19,7 @@ char newaccel[256];
 
 char buffer[256];
 int uart_fd = -1;  // Global UART file descriptor
-double overrideMag = 1.5;
+double overrideMag = 5.0;
 
 
 //Level 1 functions

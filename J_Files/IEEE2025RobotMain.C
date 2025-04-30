@@ -434,13 +434,13 @@ int balldetect(const char *filename, int *last_count) {
 void measure() {
 
     movexy(common[10].x - 5, common[10].y);
-    delay(15);
+    sleep(15);
     movexy(common[10].x, common[10].y);
-    delay(20);
+    sleep(20);
     movexy(common[10].x, common[10].y-5);
-    delay(15);
+    sleep(15);
     movexy(common[10].x, common[10].y);
-    delay(20)
+    sleep(20);
 }
 
 void waitForLight() {
@@ -449,12 +449,12 @@ void waitForLight() {
     setup();
     loadcmd();
 
-   while(running){
-    measure();
-   // movexy(common[10].x, common[10].y-10);
+ while(running){
+  //  measure();
+   movexy(common[10].x, common[10].y-10);
 //PASSSED
 
-/*
+
    point('S');
     sleep(2);
     point('W');
@@ -463,7 +463,8 @@ void waitForLight() {
 sleep(2);
     point('N');
     sleep(2);
-*/
+    movexy(common[10].x, common[10].y);
+ }
     
    // overridexy(common[10].x-5, common[10].y+5, "x");
     //sleep(3);
@@ -519,7 +520,7 @@ THIS SECTION HAS PASSED
 
 
 printf("DONE TESTING");
-   }
+  // }
 }
 void outsideSweep() {
     
@@ -585,6 +586,7 @@ void outsideSweep() {
 	aligncave();
     point('E'); //end of sweep
 	printf("END OF INITIAL SWEEP");
+    sleep(200);
 	
 }
 /*Coordinate common[] = {//usage:    movexy(common[idx].x, common[idx].y);
