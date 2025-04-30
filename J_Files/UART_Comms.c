@@ -293,9 +293,10 @@ int aligncave() {
 
 
             printf("sending second set");
+            uart_direction_Write(uart_fd, 0.00, dy, 0.00,1);
             polluart();
 
-            uart_direction_Write(uart_fd, 0.00, dy, 0.00,1);
+
         }
         else if (primary == 'y') {
             // Code branch for primary y-axis movement.

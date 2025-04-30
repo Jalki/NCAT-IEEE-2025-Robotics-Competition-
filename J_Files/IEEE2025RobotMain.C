@@ -431,6 +431,17 @@ int balldetect(const char *filename, int *last_count) {
     return 0;
 }
 
+void measure() {
+
+    movexy(common[10].x - 5, common[10].y);
+    delay(15);
+    movexy(common[10].x, common[10].y);
+    delay(20);
+    movexy(common[10].x, common[10].y-5);
+    delay(15);
+    movexy(common[10].x, common[10].y);
+    delay(20)
+}
 
 void waitForLight() {
     printf("State: Wait For Light\n");
@@ -438,11 +449,30 @@ void waitForLight() {
     setup();
     loadcmd();
 
-    while(running){
+   while(running){
+    measure();
+   // movexy(common[10].x, common[10].y-10);
+//PASSSED
 
+/*
+   point('S');
+    sleep(2);
+    point('W');
+    sleep(2);
+    point('E');
+sleep(2);
+    point('N');
+    sleep(2);
+*/
+    
    // overridexy(common[10].x-5, common[10].y+5, "x");
     //sleep(3);
    // overridexy(common[10].x, common[10].y, "y");
+
+   
+   //THIS SECTION HAS PASSED
+/*
+   
     robotcmd("lower");
     sleep(5);
     robotcmd("unloadG");
@@ -454,7 +484,23 @@ void waitForLight() {
     robotcmd("sweep");
     sleep(3);
     robotcmd("lower");
+    */
+
+    /*
+THIS SECTION HAS PASSED
+
+    movexy(common[10].x, common[10].y - 7);
+        sleep(5);
+        rotate(180);
+        sleep(5);
+        rotate(-180);
     sleep(5);
+    movexy(common[10].x, common[10].y);
+
+    */
+   
+    
+    /* THIS SECTION HAS PASSED
     overridequick('o', 1);
     sleep(3);
     overridequick('o',2);
@@ -465,66 +511,16 @@ void waitForLight() {
     sleep(3);
     overridequick('o', 4);
     sleep(1);
+    
     printf("END OF TEST");
     sleep(10);
     }
-    /**
-    // Insert sensor logic to wait for a light trigger here.
-    sleep(2);
-//start motor sequence
-
-
-MotorCall = 1;
-sleep(2);
-MotorCall = 0;
-sleep(2);
-
-MotorCall = 2;
-sleep(2);
-MotorCall = 0;
-sleep(2);
-
-MotorCall = 3;
-sleep(2);
-MotorCall = 0;
-sleep(2);
-
-MotorCall = 4;
-sleep(2);
-MotorCall = 0;
-sleep(2);
-
-MotorCall = 5;
-sleep(2);
-MotorCall = 0;
-sleep(2);
-//end motor sequence
 */
+
+
+printf("DONE TESTING");
+   }
 }
-
-/*
-Coordinate common[] = {//usage:    movexy(common[idx].x, common[idx].y);
-    {86.5, 7.5},//below upper stud[0]
-    {86.5, 37.0},//above lower stud[1]
-    {83.0, 6.0},//left upper stud[2]
-    {83.0, 38.5},//left lower stud[3]
-    {68.0, 6.0},//upper left corner in cave[4]
-    {68.0, 38.5},//lower left corner[5]
-    {48.5, 6.0},//upper right corner out cave[6]
-    {42.0, 38.0},//left 'G' box[7]
-    {48.5, 32.0},//above 'G' box[8]
-	{26.5, 3},//G box centre [9]
-	{31, 38.5},//home point[10]
-    { 6.0,  6.0},  // upper left corner[11]
-    { 6.0, 38.5},  // lower left corner[12]
-    {17,6},//left upper box [13]
-    {23,12.5}, //below upper box [14]
-    {36,6}, //right upper box [15]
-};
-
-
-*/
-
 void outsideSweep() {
     
 	double *params = getrobotparams();// only current on first call
