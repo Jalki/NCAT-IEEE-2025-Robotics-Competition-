@@ -217,7 +217,7 @@ void* data_work(void* arg) {//current setup:
                 break;
 
             case OUTSIDE_SWEEP:
-                outsideSweep();
+              //  outsideSweep();
                 currentState = UNLOAD_SORT;
                 break;
 
@@ -571,9 +571,12 @@ void outsideSweep() {
 
 */
 void unloadSortBins(const char *prelocation) {
-    setup();
-    loadcmd();
 
+    robotcmd("unloadN");
+    sleep(4);
+    robotcmd("unloadG");
+    sleep(4);
+    robotcmd("off");
     //keep in mind to try to keep this simple as we are doing this twice
     printf("State: Unload and Sort to Bins\n");
     // Insert code for unloading and sorting into bins here.
