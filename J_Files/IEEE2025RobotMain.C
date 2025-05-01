@@ -476,15 +476,21 @@ printf("DONE TESTING");
 void cammove() {
 
     movexy(common[12].x, common[12].y);
+
+
     while(1) {
-    movexy(common[10].x+ 6, common[10].y);
-    if (ballexist){
-        robotcmd("sweep");
-        movexy(common[10].x, 6)
-        robotcmd("off");
-        overridexy(common[10].x, common[10].y, "y")
-        break;
+        if (ballexist){
+            robotcmd("sweep");
+            movexy(common[10].x, 6)
+            robotcmd("off");
+            overridexy(common[10].x, common[10].y, "y")
+            break;
+        }
+    else {
+    movexy(getrobotparams()[0]+ 6, getrobotparams()[1]);
+    sleep(2);
     }
+
     sleep(200);
 
 }
