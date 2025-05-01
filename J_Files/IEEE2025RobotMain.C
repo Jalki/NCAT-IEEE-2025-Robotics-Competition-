@@ -491,6 +491,7 @@ void cammove() {
     sleep(2);
     }
 }
+printf("done!!!\n")
     sleep(200);
 
 
