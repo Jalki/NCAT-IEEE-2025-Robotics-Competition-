@@ -218,12 +218,13 @@ void* data_work(void* arg) {//current setup:
                 break;
 
             case OUTSIDE_SWEEP:
-                cammove();
+                outsideSweep();
                 currentState = UNLOAD_SORT;
                 break;
 
             case UNLOAD_SORT:
                 unloadSortBins("o");
+                sleep(1000);
                 // In the first pass, after unloading we move to PREP_CAVE.
                 // In the second pass, after unloading we go home.
                 if (iteration == 0) {
