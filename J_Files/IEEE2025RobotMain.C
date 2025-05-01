@@ -477,6 +477,7 @@ void outsideSweep() {
 	
     //TODO: insert brush roller enable here
 //LEGEND: * = PASSED, ** MODIFY BASED ON SUGGESTION, # = FAIL
+    //robotcmd("sweep");
 	movexy(26.5, params[1]);// [this is a crafty way of translating only by one axis, keep this in mind]*
     //move under centre of N box*
 	overridexy(26.5,12.5, "y");//validate this position--below box** convert to override
@@ -484,9 +485,9 @@ void outsideSweep() {
 	movexy(common[10].x, common[10].y);//home*
 	prepareclearance('S', 'W'); //automatically point west w/ clearance work*
 	
-	movexy(common[12].x,common[12].y); //clear left side of home->corner
-    overridequick('o', 1);//realign any minor drift [this is drift axis optimized]
-    movexy(common[13].x, getrobotparams()[1]+1); //move left of N box at current y coordinate
+	movexy(common[12].x-1,common[12].y); //clear left side of home->corner
+    overridequick('o', 1, "x");//realign any minor drift [this is drift axis optimized]
+    movexy(common[13].x, getrobotparams()[1]-1); //move left of N box at current y coordinate
     prepareclearance('S', 'N');//point north at border
     overridexy(common[13].x, 38.5, "y");//ensure robot is flush lower wall
 	movexy(common[13].x, common[13].y);//clear left of N box upwards
@@ -563,14 +564,14 @@ void unloadSortBins(const char *prelocation) {
     printf("State: Unload and Sort to Bins\n");
     // Insert code for unloading and sorting into bins here.
     if (strcmp(prelocation, "i") == 0) {
-        overridequick('i', 1);//jostle lower left corner of cave
+        overridequick('i', 1, "x");//jostle lower left corner of cave
         movexy(common[5].x+3, common[5].y);//move over 3 units
         prepareclearance('S', 'N');//point n if not already
     }
     else if(strcmp(prelocation, "o")==0) {
         movexy(common[10].x, common[10].y);//move to home
         prepareclearance('S', 'N');//prepare to point north
-        overridequick('o', 4);//jostle left of G box
+        overridequick('o', 4, "x");//jostle left of G box
         
     }
 
@@ -900,7 +901,7 @@ int main(void) {
     return 0;
 }
 
-void overridequick(char mode, int idx) {
+void overridequick(char mode, int idx, const char *axis) {
     int mapIdx = -1;
     if (mode == 'o') {
         switch (idx) {
@@ -919,6 +920,6 @@ void overridequick(char mode, int idx) {
         }
     }
     if (mapIdx >= 0) {
-        overridexy(common[mapIdx].x, common[mapIdx].y, "xy");//auto optimized movement for drift
+        overridexy(common[mapIdx].x, common[mapIdx].y, axis);//auto optimized movement for drift
     }
 }
