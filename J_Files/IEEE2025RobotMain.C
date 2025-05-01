@@ -594,8 +594,9 @@ void unloadSortBins(const char *prelocation) {
     //TODO: insert, the loader up, loader down, off brush rolker,
     //start sorting mechanism for G container
     overridexy(common[12].x+1, common[12].y, "y"); //jostle towards LC
-    overridexy(common[12].x, common[12].y+4, "x"); //jostle towards LC
-    prepareclearance('S', 'W');//point west to unload
+    overridexy(common[12].x, common[12].y, "x"); //jostle towards LC
+    aligncave();
+    prepareclearance('W', 'W');//point west to unload
     overridexy(common[7].x-2, common[7].y-2, "x");
     overridexy(common[7].x, common[7].y-1, "x");
     overridexy(common[7].x, common[7].y, "y");
