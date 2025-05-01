@@ -572,11 +572,6 @@ void outsideSweep() {
 */
 void unloadSortBins(const char *prelocation) {
 
-    robotcmd("raise");
-    sleep(8);
-    robotcmd("lower");
-    sleep(8);
-    robotcmd("off");
     //keep in mind to try to keep this simple as we are doing this twice
     printf("State: Unload and Sort to Bins\n");
     // Insert code for unloading and sorting into bins here.
@@ -604,7 +599,7 @@ void unloadSortBins(const char *prelocation) {
 
     overridexy(common[13].x, common[13].y, "x");//move next to N box to unload
     robotcmd("unloadN");
-    sleep(5);
+    sleep(10);
     robotcmd("off");
     //TODO: insert, the loader up, loader down, off brush rolker,
     //start sorting mechanism for G container
@@ -621,7 +616,7 @@ void unloadSortBins(const char *prelocation) {
     overridexy(common[8].x, common[8].y-1, "x");
     overridexy(common[8].x, common[8].y, "y");
    robotcmd("unloadG");
-    sleep(5);
+    sleep(10);
    robotcmd("off");
     //todo: ONLY do G box sorting. everything is unloaded already.
 
