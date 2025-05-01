@@ -583,14 +583,14 @@ void unloadSortBins(const char *prelocation) {
     overridexy(common[12].x, common[12].y, "y");
 
     aligncave();
-    prepareclearance('W', 'S');
+    prepareclearance('W', 'W');
     overridexy(common[11].x+1,common[11].y,"y");
     overridexy(common[11].x,common[11].y,"x");
 
     overridexy(common[13].x, common[13].y, "x");//move next to N box to unload
-    robotcmd("unloadN");
+    //robotcmd("unloadN");
     sleep(5);
-    robotcmd("off");
+    //robotcmd("off");
     //TODO: insert, the loader up, loader down, off brush rolker,
     //start sorting mechanism for G container
     overridexy(common[12].x+1, common[12].y, "y"); //jostle towards LC
@@ -603,9 +603,9 @@ void unloadSortBins(const char *prelocation) {
 
     overridexy(common[8].x, common[8].y-1, "x");
     overridexy(common[8].x, common[8].y, "y");
-    robotcmd("unloadG");
+   // robotcmd("unloadG");
     sleep(5);
-    robotcmd("off");
+   // robotcmd("off");
     //todo: ONLY do G box sorting. everything is unloaded already.
 
 
