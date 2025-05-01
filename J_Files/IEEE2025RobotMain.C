@@ -100,7 +100,7 @@ int balldetect(const char *filename, int *last_count);
 int prepareclearance(char borderdir, char facingfinaldirection);
 int point(char targetDir);
 void overridequick(char mode, int idx, const char *axis);
-void cammmove();
+void cammove();
 
 //The usleep() function in C suspends execution of the calling thread for the number of microseconds specified in its argument.
 //It's part of the unistd.h header and is used for introducing short delays in a program's execution.
