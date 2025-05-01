@@ -757,7 +757,7 @@ int canmoveto(double delta_row_in, double delta_col_in) {
     // Check that movement is along one axis only.
 
    // printf("DEBUG: CANMOVETO (delta_row_in) = %.4f, (delta_col_in) = %.6f\n",
-       (delta_row_in), (delta_col_in));
+      // (delta_row_in), (delta_col_in));
 
 
     if ((delta_row_in != 0.0 && delta_col_in != 0.0)) {
@@ -774,12 +774,12 @@ int canmoveto(double delta_row_in, double delta_col_in) {
     
     // Print debug info:
    // printf("DEBUG: canmoveto: Current position: (%.2f, %.2f). Delta: (%.2f, %.2f) <Y,x>. [Playable field absolute] Destination: (%.2f, %.2f).\n",
-        (robot_row - BORDER_CELLS) / (double)CELLS_PER_INCH,
+ /*       (robot_row - BORDER_CELLS) / (double)CELLS_PER_INCH,
         (robot_col - BORDER_CELLS) / (double)CELLS_PER_INCH,
         d_row / (double)CELLS_PER_INCH,
         d_col / (double)CELLS_PER_INCH,
         (dest_row - BORDER_CELLS) / (double)CELLS_PER_INCH,
-        (dest_col - BORDER_CELLS) / (double)CELLS_PER_INCH);
+        (dest_col - BORDER_CELLS) / (double)CELLS_PER_INCH);*/
     return canmovetorecursive(robot_row, robot_col, dest_row, dest_col);
 }
 

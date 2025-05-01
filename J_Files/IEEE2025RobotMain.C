@@ -217,7 +217,7 @@ void* data_work(void* arg) {//current setup:
                 break;
 
             case OUTSIDE_SWEEP:
-               outsideSweep();
+               unloadSortBins("o");
                 currentState = UNLOAD_SORT;
                 break;
 
