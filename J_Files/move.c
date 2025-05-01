@@ -366,7 +366,7 @@ int canrotate(void) {
     int start_col = robot_col - ROTATION_CLEARANCE_CELLS;
     int end_col = robot_col + ROTATION_CLEARANCE_CELLS;
 
-    debugrotateconditions(start_row, end_row, start_col, end_col);
+   // debugrotateconditions(start_row, end_row, start_col, end_col);
 
     // Ensure the region is within the playable boundaries.
     if (start_row < PLAYABLE_TOP || end_row > PLAYABLE_BOTTOM ||
@@ -756,7 +756,7 @@ int canmovetorecursive(int cur_row, int cur_col, int dest_row, int dest_col) {
 int canmoveto(double delta_row_in, double delta_col_in) {
     // Check that movement is along one axis only.
 
-    printf("DEBUG: CANMOVETO (delta_row_in) = %.4f, (delta_col_in) = %.6f\n",
+   // printf("DEBUG: CANMOVETO (delta_row_in) = %.4f, (delta_col_in) = %.6f\n",
        (delta_row_in), (delta_col_in));
 
 
@@ -773,7 +773,7 @@ int canmoveto(double delta_row_in, double delta_col_in) {
     int dest_col = robot_col + d_col;
     
     // Print debug info:
-    printf("DEBUG: canmoveto: Current position: (%.2f, %.2f). Delta: (%.2f, %.2f) <Y,x>. [Playable field absolute] Destination: (%.2f, %.2f).\n",
+   // printf("DEBUG: canmoveto: Current position: (%.2f, %.2f). Delta: (%.2f, %.2f) <Y,x>. [Playable field absolute] Destination: (%.2f, %.2f).\n",
         (robot_row - BORDER_CELLS) / (double)CELLS_PER_INCH,
         (robot_col - BORDER_CELLS) / (double)CELLS_PER_INCH,
         d_row / (double)CELLS_PER_INCH,
@@ -1188,7 +1188,7 @@ void recorddeltas(double dx, double dy, char primaryAxis) {
     deltas[0] = dx;
     deltas[1] = dy;
     deltas[2] = (double) primaryAxis;  // store the character as a double (its ASCII value)
-    printf("recorddeltas: Recorded dx = %.2f, dy = %.2f, primary axis = %c\n", dx, dy, primaryAxis);
+    //printf("recorddeltas: Recorded dx = %.2f, dy = %.2f, primary axis = %c\n", dx, dy, primaryAxis);
 }
 
 // getdeltas: Retrieves the recorded deltas into the variables pointed to by dx, dy, and primaryAxis.
