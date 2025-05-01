@@ -613,7 +613,7 @@ void unloadSortBins(const char *prelocation) {
     overridexy(common[7].x, common[7].y-1, "x");
     overridexy(common[7].x, common[7].y, "y");
 
-    overridexy(common[8].x, common[8].y-1, "x");
+    overridexy(common[8].x, common[8].y-2.5, "x");
     overridexy(common[8].x, common[8].y, "y");
    robotcmd("unloadN");
     sleep(10);
