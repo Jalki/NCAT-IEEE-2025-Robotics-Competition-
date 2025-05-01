@@ -217,7 +217,7 @@ void* data_work(void* arg) {//current setup:
                 break;
 
             case OUTSIDE_SWEEP:
-               unloadSortBins("o");
+                outsideSweep();
                 currentState = UNLOAD_SORT;
                 break;
 
@@ -493,23 +493,23 @@ void outsideSweep() {
 	movexy(common[13].x, common[13].y);//clear left of N box upwards
     //we have cleared left of n box, below it, and left of home.
 
-    robotcmd("off");
+   // robotcmd("off");
     overridexy(common[13].x, 38.5, "y");//ensure robot is again flush with lower wall
 	movexy(common[10].x, common[10].y);//go home [should go y-x]
 	prepareclearance('S', 'E');//point towards G box
 	//direction: E
-    robotcmd("sweep");
+    //robotcmd("sweep");
 	overridexy(common[7].x, common[7].y, "x");//left of G box [pass],jostle to it also
-    robotcmd("off");
+    //robotcmd("off");
 	movexy(common[10].x, common[10].y);//home
     
 	movexy(getrobotparams()[0], common[8].y);//going up above G box.
-    robotcmd("sweep");
+   // robotcmd("sweep");
     //home x centrered,  on y-height above G box, we will clear this row summarily
 	overridexy(common[8].x, common[8].y, "x");//above G box, jostle to r wall.
 
 	//assumption: robot is above G box
-    robotcmd("off");
+   // robotcmd("off");
 	movexy(common[8].x - 3, getrobotparams()[1]);//move away from R wall, maintain y
 	prepareclearance('S', 'N');//prepare for pseudo sweep pointing north
 	overridexy(common[15].x, getrobotparams()[1], "x"); //GENIUS way of once again taking advantage of predetermined coords
@@ -538,16 +538,16 @@ void outsideSweep() {
 
 		sleep(.25);
 	}
-	
+	robotcmd("off");
 	overridexy(common[10].x, common[10].y, "y");
     robotcmd("raise");
     sleep(8);
     robotcmd("lower");
-    sleep(8)
+    sleep(8);
 
    // point('E'); //end of sweep
 	printf("END OF INITIAL SWEEP");
-    sleep(200);
+
 	
 }
 /*Coordinate common[] = {//usage:    movexy(common[idx].x, common[idx].y);
