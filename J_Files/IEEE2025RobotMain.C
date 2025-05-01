@@ -577,18 +577,23 @@ void unloadSortBins(const char *prelocation) {
 
     aligncave();
     movexy(common[12].x-4, common[12].y);//get drift correction to a common corner
-    overridexy(common[12].x, common[12].y, "x");
+    overridexy(common[12].x+1, common[12].y, "x");
 
     aligncave();
     prepareclearance('W', 'S');
+    overridexy(common[11].x,common[11].y,"y");
+
     movexy(common[14].x, common[14].y);//move next to N box to unload
- 
+    robotcmd("unloadN");
+    sleep(5);
+    robotcmd("off");
     //TODO: insert, the loader up, loader down, off brush rolker,
     //start sorting mechanism for G container
-    overridexy(common[10].x, common[10].y, "y"); //jostle towards home
+    overridexy(common[12].x+6, common[12].y, "y"); //jostle towards LC
     prepareclearance('S', 'W');//point north to unload
     overridexy(common[7].x, common[7].y, "x");
-    overridexy(common[8].x, common[8].y, "x");
+    overridexy(common[8].x, common[8].y-1, "x");
+    overridexy(common[8].x, common[8].y, "y");
     //todo: ONLY do G box sorting. everything is unloaded already.
 
 
