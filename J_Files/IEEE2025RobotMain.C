@@ -583,7 +583,7 @@ void unloadSortBins(const char *prelocation) {
     overridexy(common[12].x, common[12].y, "y");
 
     aligncave();
-    prepareclearance('W', 'W');
+    prepareclearance('W', 'S');
     overridexy(common[11].x+1,common[11].y,"y");
     overridexy(common[11].x,common[11].y,"x");
 
@@ -597,6 +597,8 @@ void unloadSortBins(const char *prelocation) {
     overridexy(common[12].x, common[12].y, "x"); //jostle towards LC
     aligncave();
     prepareclearance('W', 'W');//point west to unload
+    overridexy(common[12].x, common[12].y, "y");
+
     overridexy(common[7].x-2, common[7].y-2, "x");
     overridexy(common[7].x, common[7].y-1, "x");
     overridexy(common[7].x, common[7].y, "y");
