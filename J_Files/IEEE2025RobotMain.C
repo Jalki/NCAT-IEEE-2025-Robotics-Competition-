@@ -481,9 +481,9 @@ void cammove() {
     while(1) {
         if (ballexist){
             robotcmd("sweep");
-            movexy(common[10].x, 6)
+            movexy(getrobotparams()[0],6);
             robotcmd("off");
-            overridexy(common[10].x, common[10].y, "y")
+            overridexy(getrobotparams()[0], 38.5, "y");
             break;
         }
     else {
