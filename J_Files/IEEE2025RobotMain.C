@@ -454,15 +454,20 @@ movexy(common[10].x, common[10].y - 10);
 movexy(common[10].x, common[10].y);
 
 }
+
+void quad2() {
+    overridexy(common[10].x + 10, common[10].y, "x");
+    overridexy(common[10].x, common[10].y, "x");
+
+    overridexy(common[10].x, common[10].y - 10, "y");
+    overridexy(common[10].x, common[10].y, "y");
+}
 void waitForLight() {
     printf("State: Wait For Light\n");
     initalizemovement();
     setup();
     loadcmd();
 
-while (1) {
-    measure();
-}
 printf("DONE TESTING");
   // }
 }
@@ -474,7 +479,7 @@ void outsideSweep() {
 //LEGEND: * = PASSED, ** MODIFY BASED ON SUGGESTION, # = FAIL
 	movexy(26.5, params[1]);// [this is a crafty way of translating only by one axis, keep this in mind]*
     //move under centre of N box*
-	movexy(26.5,12.5);//validate this position--below box** convert to override
+	overridexy(26.5,12.5, "y");//validate this position--below box** convert to override
     overridexy(26.5, 38.5, "y");//jostle x-centre wrt n box to lower border*
 	movexy(common[10].x, common[10].y);//home*
 	prepareclearance('S', 'W'); //automatically point west w/ clearance work*

@@ -9,7 +9,7 @@
 #include <sys/time.h> // System time functions
 #include <string.h>  // for strlen()
 #include "move.c" //This is Arnold Grid code!!!
-
+#include <cmath>
 #define UART_PORT "/dev/ttyAMA0" // Change this to your actual serial port
 
 char gyro[256];
@@ -212,14 +212,23 @@ int main() {
 // New function: movexy()
 // Moves the robot to the given target coordinates (in inches relative to the playable area)
 // and, if successful, retrieves the delta values and processes them per axis.
+
+double recentdx, recentdy;
+
 int movexy(double target_x, double target_y) {
     // Call moverobotxy() to attempt to move the robot to the target (inches).
     int result = moverobotxy(target_x, target_y);
+    double *params = getrobotparams();
+
+    char current_facing = (char) params[2];
+
     if (result) {
         // Retrieve the movement delta values and primary axis.
         double *mvDeltas = getdeltas();  // mvDeltas[0] = dx, [1] = dy, [2] = primary axis (stored as ASCII)
         double dx = mvDeltas[0];
         double dy = mvDeltas[1];
+        recentdx = dx;
+        recentdy = dy;
         char primary = (char) mvDeltas[2];
         printf("movexy: Movement succeeded. dx = %.4f in, dy = %.4f in, primary axis = %c\n", 
                dx, dy, primary);
@@ -264,7 +273,6 @@ int movexy(double target_x, double target_y) {
     sleep(3);
     return result;
 }
-
 
 
 
@@ -356,16 +364,19 @@ int rotate(double angle) {
 
 int overridexy(double target_x, double target_y, const char *ApplyAxis) {
     // 1) execute the move unconditionally
-    int result = moverobotxy(target_x, target_y);//allow to reach target
+
+    int result = movexy(target_x, target_y);//allow to reach target
+
     if (result) {
 
         // 2) pull out the recorded deltas
         double *mvDeltas = getdeltas();  // mvDeltas[0] = dx, [1] = dy, [2] = primary axis (stored as ASCII)
-        double dxNorm = mvDeltas[0];
-        double dyNorm= mvDeltas[1];
+       // double dxNorm = mvDeltas[0];
+       // double dyNorm= mvDeltas[1];
 
-        double dx =  ((mvDeltas[0] > 0) - (mvDeltas[0] < 0)) * (overrideMag/2); //get sign of x of magnitude 3
-        double dy =  (( mvDeltas[1] > 0) - ( mvDeltas[1] < 0)) * overrideMag; //get sign of y of magnitude 3
+
+        double dx = std::copysign(overrideMag, recentdx);
+        double dy = std::copysign(overrideMag, recentdy);
         char primary = (char) mvDeltas[2]; //x final motions are more stable than y final motions
 
         if (strcmp(ApplyAxis, "y") == 0) {
@@ -384,12 +395,14 @@ int overridexy(double target_x, double target_y, const char *ApplyAxis) {
         
         // 3) dispatch over UART exactly like movexy does
         if (primary == 'x') {
-            // first the x‑step, the real distance travel
-            uart_direction_Write(uart_fd, dxNorm, 0.0, 0.0,1);// "1" stands for normal movement
-            polluart();//wait vfor this to complete
-            // then the y‑step
-            uart_direction_Write(uart_fd, 0, dyNorm, 0.0,1);// "1" stands for normal movement
-            polluart();//wait vfor this to complete
+            // first the x?step, the real distance travel
+           // uart_direction_Write(uart_fd, dxNorm, 0.0, 0.0,1);// "1" stands for normal movement
+           // polluart();//wait vfor this to complete
+
+            // then the y?step
+
+            //uart_direction_Write(uart_fd, 0, dyNorm, 0.0,1);// "1" stands for normal movement
+           // polluart();//wait vfor this to complete
 
 
             uart_direction_Write(uart_fd, dx, 0.0, 0.0,0);//do overrides after normal translation only
@@ -399,12 +412,12 @@ int overridexy(double target_x, double target_y, const char *ApplyAxis) {
 
         }
         else if (primary == 'y') {
-            // first the y‑step
-            uart_direction_Write(uart_fd, 0, dyNorm, 0.0,1);// "1" stands for normal movement
-            polluart();//wait vfor this to complete
-            // then the x‑step
-            uart_direction_Write(uart_fd, dxNorm, 0.0, 0.0,1);// "1" stands for normal movement
-            polluart();//wait vfor this to complete
+            // first the y?step
+           // uart_direction_Write(uart_fd, 0, dyNorm, 0.0,1);// "1" stands for normal movement
+           // polluart();//wait vfor this to complete
+            // then the x?step
+           // uart_direction_Write(uart_fd, dxNorm, 0.0, 0.0,1);// "1" stands for normal movement
+          //  polluart();//wait vfor this to complete
 
 
             uart_direction_Write(uart_fd, 0.0, dy, 0.0, 0);//do overrides after normal translation only
@@ -423,6 +436,6 @@ int overridexy(double target_x, double target_y, const char *ApplyAxis) {
     else {printf("overridexy: Robot MUST be in a position to move here to do an override. (because it moves in the general direction of the destination)\n");
     
     }
-    // always report “success” (no safety net here)
+    // always report ?success? (no safety net here)
     return 1;
 }
