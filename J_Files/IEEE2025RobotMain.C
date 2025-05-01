@@ -598,7 +598,7 @@ void unloadSortBins(const char *prelocation) {
     overridexy(common[11].x,common[11].y,"x");
 
     overridexy(common[13].x, common[13].y, "x");//move next to N box to unload
-    robotcmd("unloadN");
+    robotcmd("unloadG");
     sleep(10);
     robotcmd("off");
     //TODO: insert, the loader up, loader down, off brush rolker,
@@ -615,7 +615,7 @@ void unloadSortBins(const char *prelocation) {
 
     overridexy(common[8].x, common[8].y-1, "x");
     overridexy(common[8].x, common[8].y, "y");
-   robotcmd("unloadG");
+   robotcmd("unloadN");
     sleep(10);
    robotcmd("off");
     //todo: ONLY do G box sorting. everything is unloaded already.
