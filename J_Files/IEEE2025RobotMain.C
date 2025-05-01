@@ -490,10 +490,10 @@ void cammove() {
     movexy(getrobotparams()[0]+ 6, getrobotparams()[1]);
     sleep(2);
     }
-
+}
     sleep(200);
 
-}
+
 
 }
 void outsideSweep() {
