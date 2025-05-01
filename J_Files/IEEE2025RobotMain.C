@@ -100,6 +100,7 @@ int balldetect(const char *filename, int *last_count);
 int prepareclearance(char borderdir, char facingfinaldirection);
 int point(char targetDir);
 void overridequick(char mode, int idx, const char *axis);
+void cammmove();
 
 //The usleep() function in C suspends execution of the calling thread for the number of microseconds specified in its argument.
 //It's part of the unistd.h header and is used for introducing short delays in a program's execution.
@@ -217,7 +218,7 @@ void* data_work(void* arg) {//current setup:
                 break;
 
             case OUTSIDE_SWEEP:
-              //  outsideSweep();
+                cammove();
                 currentState = UNLOAD_SORT;
                 break;
 
@@ -470,6 +471,23 @@ void waitForLight() {
 
 printf("DONE TESTING");
   // }
+}
+
+void cammove() {
+
+    while(1) {
+    movexy(common[10].x+ 2, common[10].y);
+    if (ballexist){
+        robotcmd("sweep");
+        movexy(common[10].x, 6)
+        robotcmd("off");
+        overridexy(common[10].x, common[10].y, "y")
+        break;
+    }
+    sleep(200);
+
+}
+
 }
 void outsideSweep() {
     
