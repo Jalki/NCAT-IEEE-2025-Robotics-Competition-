@@ -569,9 +569,7 @@ void unloadSortBins(const char *prelocation) {
         prepareclearance('S', 'N');//point n if not already
     }
     else if(strcmp(prelocation, "o")==0) {
-        movexy(common[10].x, common[10].y);//move to home
-        prepareclearance('S', 'N');//prepare to point north
-        overridequick('o', 4, "x");//jostle left of G box
+        //nothing
         
     }
 
