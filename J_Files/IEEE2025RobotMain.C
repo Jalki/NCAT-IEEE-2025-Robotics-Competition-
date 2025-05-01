@@ -587,14 +587,15 @@ void unloadSortBins(const char *prelocation) {
     overridexy(common[11].x+1,common[11].y,"y");
     overridexy(common[11].x,common[11].y,"x");
 
-    overridexy(common[14].x, common[14].y, "x");//move next to N box to unload
+    overridexy(common[13].x, common[13].y, "x");//move next to N box to unload
     robotcmd("unloadN");
     sleep(5);
     robotcmd("off");
     //TODO: insert, the loader up, loader down, off brush rolker,
     //start sorting mechanism for G container
     overridexy(common[12].x+6, common[12].y, "y"); //jostle towards LC
-    prepareclearance('S', 'W');//point north to unload
+    prepareclearance('S', 'W');//point west to unload
+    overridexy(common[7].x-2, common[7].y, "x");
     overridexy(common[7].x, common[7].y, "x");
     overridexy(common[8].x, common[8].y-1, "x");
     overridexy(common[8].x, common[8].y, "y");
