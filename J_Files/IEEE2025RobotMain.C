@@ -99,7 +99,7 @@ void goHome();
 int balldetect(const char *filename, int *last_count);
 int prepareclearance(char borderdir, char facingfinaldirection);
 int point(char targetDir);
-void overridequick(char mode, int idx);
+void overridequick(char mode, int idx, const char *axis);
 
 //The usleep() function in C suspends execution of the calling thread for the number of microseconds specified in its argument.
 //It's part of the unistd.h header and is used for introducing short delays in a program's execution.
@@ -485,9 +485,9 @@ void outsideSweep() {
 	movexy(common[10].x, common[10].y);//home*
 	prepareclearance('S', 'W'); //automatically point west w/ clearance work*
 	
-	movexy(common[12].x-1,common[12].y); //clear left side of home->corner
-    overridequick('o', 1, "x");//realign any minor drift [this is drift axis optimized]
-    movexy(common[13].x, getrobotparams()[1]-1); //move left of N box at current y coordinate
+	movexy(common[12].x,common[12].y-1); //clear left side of home->corner
+    overridequick('o', 1, "y");//realign any minor drift [this is drift axis optimized]
+    movexy(common[13].x, getrobotparams()[1]-1); //move left of N box at current y coordinate[override planned]
     prepareclearance('S', 'N');//point north at border
     overridexy(common[13].x, 38.5, "y");//ensure robot is flush lower wall
 	movexy(common[13].x, common[13].y);//clear left of N box upwards
