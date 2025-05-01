@@ -560,6 +560,9 @@ void outsideSweep() {
 
 */
 void unloadSortBins(const char *prelocation) {
+    setup();
+    loadcmd();
+
     //keep in mind to try to keep this simple as we are doing this twice
     printf("State: Unload and Sort to Bins\n");
     // Insert code for unloading and sorting into bins here.
@@ -574,14 +577,17 @@ void unloadSortBins(const char *prelocation) {
     }
 
     aligncave();
-    movexy(common[12].x-4, common[12].y);//get drift correction to a common corner
-    overridexy(common[12].x+1, common[12].y, "x");
+    movexy(common[12].x-1, common[12].y);//get drift correction to a common corner
+
+    overridexy(common[12].x, common[12].y-1, "x");
+    overridexy(common[12].x, common[12].y, "y");
 
     aligncave();
     prepareclearance('W', 'S');
-    overridexy(common[11].x,common[11].y,"y");
+    overridexy(common[11].x+1,common[11].y,"y");
+    overridexy(common[11].x,common[11].y,"x");
 
-    movexy(common[14].x, common[14].y);//move next to N box to unload
+    overridexy(common[14].x, common[14].y, "x");//move next to N box to unload
     robotcmd("unloadN");
     sleep(5);
     robotcmd("off");
@@ -592,6 +598,9 @@ void unloadSortBins(const char *prelocation) {
     overridexy(common[7].x, common[7].y, "x");
     overridexy(common[8].x, common[8].y-1, "x");
     overridexy(common[8].x, common[8].y, "y");
+    robotcmd("unloadG");
+    sleep(5);
+    robotcmd("off");
     //todo: ONLY do G box sorting. everything is unloaded already.
 
 
