@@ -475,8 +475,9 @@ printf("DONE TESTING");
 
 void cammove() {
 
+    movexy(common[12].x, common[12].y);
     while(1) {
-    movexy(common[10].x+ 2, common[10].y);
+    movexy(common[10].x+ 6, common[10].y);
     if (ballexist){
         robotcmd("sweep");
         movexy(common[10].x, 6)
