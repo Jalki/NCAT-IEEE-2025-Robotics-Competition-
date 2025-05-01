@@ -477,7 +477,7 @@ void cammove() {
 
     movexy(common[12].x, common[12].y);
 
-
+    sleep(10);
     while(1) {
         if (ballexist){
             robotcmd("sweep");
