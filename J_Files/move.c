@@ -871,7 +871,7 @@ void setrobotposition(int new_row, int new_col) {//row = y, col= x
     printf("ROBOT RELOCATED TO (%d, %d)!!!! Last evicted element: '%c'\n", 
            robot_row, robot_col, lastevictedelement);
 
-    printsurroundingrows();     
+    //printsurroundingrows();     
 	//printentiregrid();
 }
 
