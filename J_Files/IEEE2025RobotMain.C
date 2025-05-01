@@ -572,11 +572,12 @@ void unloadSortBins(const char *prelocation) {
         prepareclearance('S', 'N');//point n if not already
     }
     else if(strcmp(prelocation, "o")==0) {
-        //nothing
+        overridexy(common[10].x+1, common[10].y-1, "y");
+        overridexy(common[10].x, common[10].y, "x");
         
     }
 
-    aligncave();
+    //aligncave();
     movexy(common[12].x-1, common[12].y);//get drift correction to a common corner
 
     overridexy(common[12].x, common[12].y-1, "x");
